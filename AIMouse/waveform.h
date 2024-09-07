@@ -15,8 +15,8 @@
 #include "markingtester.h"
 
 
-#include <HDataSystem_lib/include/hdatasystem_interface.h>
-#include "HDataSystem_lib/include/dataset.h"
+#include <HMultiControlSDK/include/hdatasystem_interface.h>
+#include "HMultiControlSDK/include/dataset.h"
 
 #include "qcustomplot.h"
 

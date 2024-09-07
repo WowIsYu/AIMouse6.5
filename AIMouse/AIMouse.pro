@@ -68,39 +68,19 @@ RESOURCES += \
     res.qrc \
     res.qrc
 
-INCLUDEPATH += $$PWD/HDataSystem_lib/include
-greaterThan(QT_MAJOR_VERSION, 5){
-        win32: LIBS += -L$$PWD/HDataSystem_lib/libs/ -lHDataSystem6d
-    }
-else{
-        win32: LIBS += -L$$PWD/HDataSystem_lib/libs/ -lHDataSystem5d
-    }
+INCLUDEPATH += $$PWD/HMultiControlSDK/include
+LIBS += $$PWD/HMultiControlSDK/libs/win/debug/HDataSystem6d.lib
+LIBS += $$PWD/HMultiControlSDK/libs/win/debug/HCloudClient6d.lib
+LIBS += $$PWD/HMultiControlSDK/libs/win/debug/HMultiControlSDKd.lib
+LIBS += -L$$PWD/HMultiControlSDK/libs/win/debug -lHDataSystem6d
 
-INCLUDEPATH += $$PWD/blinkdetection_lib/include
-CONFIG += debug_and_release
-CONFIG(debug, debug|release){
-    win32: LIBS += -L$$PWD/blinkdetection_lib/libs/win/debug/ -lHBlinkDetection6d -lHDataSystem6d -lHCloudClient6d
-        win32: LIBS += -L$$PWD/blinkdetection_lib/libs/thirdparty/onnxruntime  -lonnxruntimed -lonnxruntime_providers_sharedd
-        win32: LIBS += -L$$PWD/blinkdetection_lib/libs/thirdparty/fftw3  -lfftw3
-
-}else{
-    win32: LIBS += -L$$PWD/blinkdetection_lib/libs/win/release/ -lHBlinkDetection -lHDataSystem6 -lHCloudClient
-        win32: LIBS += -L$$PWD/blinkdetection_lib/libs/thirdparty/onnxruntime  -lonnxruntime -lonnxruntime_providers_shared
-
-}
-
-
-INCLUDEPATH += $$PWD/include
-LIBS += $$PWD/libs/win/debug/HDataSystem6d.lib
-LIBS += $$PWD/libs/win/debug/HCloudClient6d.lib
-LIBS += $$PWD/libs/win/debug/HMultiControlSDKd.lib
-
-INCLUDEPATH += $$PWD/thirdparty_libs
-LIBS += $$PWD/thirdparty_libs/onnxruntime/onnxruntime.lib
-LIBS += $$PWD/thirdparty_libs/onnxruntime/onnxruntimed.lib
-LIBS += $$PWD/thirdparty_libs/onnxruntime/onnxruntime_providers_shared.lib
-LIBS += $$PWD/thirdparty_libs/onnxruntime/onnxruntime_providers_sharedd.lib
-LIBS += $$PWD/thirdparty_libs/fftw3/libfftw3-3.lib
+INCLUDEPATH += $$PWD/HMultiControlSDK/thirdparty_libs
+LIBS += $$PWD/HMultiControlSDK/thirdparty_libs/onnxruntime/onnxruntime.lib
+LIBS += $$PWD/HMultiControlSDK/thirdparty_libs/onnxruntime/onnxruntimed.lib
+LIBS += $$PWD/HMultiControlSDK/thirdparty_libs/onnxruntime/onnxruntime_providers_shared.lib
+LIBS += $$PWD/HMultiControlSDK/thirdparty_libs/onnxruntime/onnxruntime_providers_sharedd.lib
+LIBS += $$PWD/HMultiControlSDK/thirdparty_libs/fftw3/libfftw3-3.lib
+LIBS += -L$$PWD/HMultiControlSDK/thirdparty_libs/fftw3  -lfftw3
 
 LIBS += -lUser32
 

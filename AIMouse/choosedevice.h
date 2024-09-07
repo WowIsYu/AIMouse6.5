@@ -6,7 +6,7 @@
 #include <QString>
 #include <QButtonGroup>
 #include <QVBoxLayout>
-#include "HDataSystem_lib/include/dataset.h"
+#include "HMultiControlSDK/include/dataset.h"
 #include <QTableWidget>
 #include <QLabel>
 #include <QTextEdit>

@@ -2,7 +2,7 @@
 #define INITDATASYSTEMPROTOCOL_H
 #pragma execution_character_set("utf-8")
 #include <QDialog>
-#include "HDataSystem_lib/include/dataset.h"
+#include "HMultiControlSDK/include/dataset.h"
 
 namespace Ui {
 class InitDataSystemProtocol;

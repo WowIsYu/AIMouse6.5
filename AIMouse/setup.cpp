@@ -29,6 +29,11 @@ void SetUp::initSetUp(HMultiControlSDK *MultiObj)
     //返回用户当前的眨眼检测结果（result: 1为有眨眼， 0为无）
     connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
             , this, &SetUp::onBlinkDetectionResult);
+    connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
+            ,this, &SetUp::onBlinkCheckResult, Qt::UniqueConnection);
+    qDebug()<<"MainWidget::on_m_pbBlinkStart_clicked "<<1 << m_modelName;
+    QString a = m_multiControl->launchBlinkDetection(1, "local_model_blinkcheck2024_09_07_14_55_33_34.json");
+    qDebug() << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" << a;
     //返回用户当前的注意力检测结果
     connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
             , this, &SetUp::onAttenDetectionResult);
@@ -36,6 +41,7 @@ void SetUp::initSetUp(HMultiControlSDK *MultiObj)
     attentionShow = new AttentionShow();
     connect(this, &SetUp::attentionResult
             , attentionShow, &AttentionShow::onReceiveResult);
+    m_multiControl->launchCalibration(1, false);
 }
 
 //void onSearchDevice();
@@ -50,8 +56,10 @@ void SetUp::initSetUp(HMultiControlSDK *MultiObj)
 
 void SetUp::onGyroData(double x, double y)
 {
-    globalPos = QPoint(x, y);
+    globalPosx = x;
+    globalPosy = y;
     main_vmouse->move(x,y);
+
 }
 
 void SetUp::on_horizontalSlider_valueChanged(int value)
@@ -75,12 +83,14 @@ void SetUp::onBlinkDetectionResult(int val)
         QTimer::singleShot(500, this, [=](){
             //main_vmouse->setStyleSheet("background-color:red");
             main_vmouse->setBgColor(Qt::red);
+            //main_vmouse->simulateMouseClick(globalPosx, globalPosy);
             if(val != 1)        //炸两次眼
             {
-                main_vmouse->simulateMouseClick(globalPos);     //触发鼠标左键按下事件
+                main_vmouse->simulateMouseClick(globalPosx, globalPosy);     //触发鼠标左键按下事件
             }
         });
     }
+    qDebug() << "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz" + QString::number(val);
 }
 void SetUp::onAttenDetectionResult(double val)
 {
@@ -97,7 +107,7 @@ void SetUp::on_beginButton_clicked()
     m_modelName=getLastModelFile();
     //调用SDK启动算法检测
     if(ui->userModeBtn->isChecked())        //使用用户模型算法
-        errMsg=m_multiControl->launchBlinkDetection(1, m_modelName);
+        errMsg=m_multiControl->launchBlinkDetection(1, "local_model_blinkcheck2024_09_07_14_55_33_34.json");
     else if(ui->bigDataBtn->isChecked())    //使用大数据模型算法
         errMsg=m_multiControl->launchBlinkDetection(2);
     else
@@ -141,8 +151,25 @@ void SetUp::on_pushButton_clicked()
 
 void SetUp::on_pushButton_2_clicked()
 {
-    QPoint point(25, 30);
-    main_vmouse->simulateMouseClick(point);
+    //QPoint point(25, 30);
+    //main_vmouse->simulateMouseClick(point);
 }
 
+void SetUp::onBlinkCheckResult(int val)
+{
+    if(val > 0){
+        qDebug()<<"onBlinkCheckResult "<<val;
+        //m_colorSwithing.doColorSwitching(ui->label_blink);
+        if(1 == val)
+        {
+            qDebug() << "单眨眼";
+        }
+            //ui->blinktimes->setText(u8"单眨眼");
+        else
+        {
+            qDebug() << "单眨眼";
+        }
+            //ui->blinktimes->setText(u8"双眨眼");
+    }
+}
 

@@ -218,6 +218,19 @@ QPushButton{
        <set>Qt::AlignCenter</set>
       </property>
      </widget>
+     <widget class="QLabel" name="labelTest">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>180</y>
+        <width>91</width>
+        <height>111</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>123</string>
+      </property>
+     </widget>
     </widget>
    </item>
   </layout>

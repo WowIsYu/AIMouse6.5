@@ -26,6 +26,9 @@ private slots:
 public slots:
     void onChooseBlueEvent(hnnk::DataAppOperator type, QString name);
     void initBlinkCali();
+    void onConnectChange(int state);
+    //眨眼检测结果
+    void onBlinkCheckResult(int);
 private:
     Ui::BlinkCalibration *ui;
 public:

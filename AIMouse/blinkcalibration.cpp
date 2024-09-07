@@ -15,7 +15,7 @@ BlinkCalibration::BlinkCalibration(QWidget *parent) :
     m_multiControl->setLicense("c180dec8f4d94af6be5860436ca26003");
     qDebug() << "BlinkCalibration:m_multiControl 已设置License授权码";
     //启动数据采集模块
-    m_multiControl->lauchCollector(DATA_FIRSTGENERAL, NET_SYSBLUE);     //选择协议
+    m_multiControl->lauchCollector(DATA_FIRSTGENERAL, hnnk::NET_COM);     //选择协议
     qDebug() << "BlinkCalibration:m_multiControl 已初始化数据采集模块";
 
 
@@ -25,8 +25,12 @@ BlinkCalibration::BlinkCalibration(QWidget *parent) :
     //返回用户当前眨眼结果分数（isOk, score）(校准是否成功， 校准结果分数)
     connect(m_multiControl, &HMultiControlSDK::notifyCalibrationResult
             , this, &BlinkCalibration::onCalibrationResult);
+    connect(m_multiControl, &HMultiControlSDK::notifyConnectState, this
+            , &BlinkCalibration::onConnectChange) ;
 
     ui->caliIcon->setPixmap(QPixmap(":/img/cxk2.png"));
+
+    connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult, this, &BlinkCalibration::onBlinkCheckResult);
 }
 
 BlinkCalibration::~BlinkCalibration()
@@ -86,6 +90,29 @@ void BlinkCalibration::onChooseBlueEvent(hnnk::DataAppOperator type, QString nam
 {
     m_multiControl->connectDevice(name);
     qDebug() << "BlinkCalibration:m_multiControl 已连接设备" << name;
+
 }
 
+void BlinkCalibration::onConnectChange(int state)
+{
+    if(state == 0)
+    {
+        ui->feedbackLabel->setText("111设备未连接");
+    }
+    else
+    {
+        ui->feedbackLabel->setText("111设备已连接");
+    }
+}
 
+void BlinkCalibration::onBlinkCheckResult(int val)
+{
+    if(val > 0){
+        qDebug()<<"onBlinkCheckResult "<<val;
+        //m_colorSwithing.doColorSwitching(ui->label_blink);
+        if(1 == val)
+            ui->labelTest->setText(u8"单眨眼");
+        else
+            ui->labelTest->setText(u8"双眨眼");
+    }
+}

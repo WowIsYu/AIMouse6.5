@@ -39,6 +39,7 @@ public:
     QGridLayout *gridLayout_3;
     QLabel *feedbackLabel;
     QLabel *labelTip;
+    QLabel *labelTest;
 
     void setupUi(QWidget *BlinkCalibration)
     {
@@ -137,6 +138,9 @@ public:
         labelTip->setObjectName("labelTip");
         labelTip->setGeometry(QRect(270, 100, 161, 31));
         labelTip->setAlignment(Qt::AlignCenter);
+        labelTest = new QLabel(frame_background);
+        labelTest->setObjectName("labelTest");
+        labelTest->setGeometry(QRect(30, 180, 91, 111));
 
         gridLayout->addWidget(frame_background, 0, 0, 1, 1);
 
@@ -156,6 +160,7 @@ public:
         caliResultLabel->setText(QCoreApplication::translate("BlinkCalibration", "\346\240\241\345\207\206\345\210\206\346\225\260", nullptr));
         feedbackLabel->setText(QCoreApplication::translate("BlinkCalibration", "\346\217\220\347\244\272", nullptr));
         labelTip->setText(QCoreApplication::translate("BlinkCalibration", "\350\267\237\347\235\200\344\270\200\350\265\267\347\234\250\347\234\274\347\235\233", nullptr));
+        labelTest->setText(QCoreApplication::translate("BlinkCalibration", "123", nullptr));
     } // retranslateUi
 
 };

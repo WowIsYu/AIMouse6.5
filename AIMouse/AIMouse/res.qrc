@@ -1,0 +1,29 @@
+<RCC>
+    <qresource prefix="/">
+        <file>img/algorithm1.png</file>
+        <file>img/attemtion.png</file>
+        <file>img/eye.png</file>
+        <file>img/game.png</file>
+        <file>img/ic_usb_bluetooth.png</file>
+        <file>img/icons8-finish-flag-64.png</file>
+        <file>img/icons8-opened-folder-64.png</file>
+        <file>img/icons8-pause-button-64.png</file>
+        <file>img/icons8-play-64.png</file>
+        <file>img/icons8-record-96.png</file>
+        <file>img/icons8-settings-64.png</file>
+        <file>img/icons8-stop-64.png</file>
+        <file>img/scutbci.png</file>
+        <file>img/set.png</file>
+        <file>img/wave.png</file>
+        <file>img/mouse_pointer.png</file>
+        <file>img/mouse_pointer_green.png</file>
+        <file>img/mouse_pointer_red.png</file>
+        <file>img/mouse_pointer_yellow.png</file>
+        <file>img/pwd.png</file>
+        <file>img/user_name.png</file>
+        <file>img/background-gg.jpg</file>
+        <file>img/cxk.png</file>
+        <file>img/cxk1.png</file>
+        <file>img/cxk2.png</file>
+    </qresource>
+</RCC>

@@ -133,8 +133,9 @@ Waveform::Waveform(QWidget *parent)
     m_dataSystemSDK = new hnnk::HDataSystem_interface();
     qDebug() << "WaveForm:m_dataSystemSDK 已创建实例";
    //初始化数据采集协议
-    m_dataSystemSDK->initEegDataCollectorEnv((DSPROTOCOLTYPE)1, (DSNETTYPE)2);
+    m_dataSystemSDK->initEegDataCollectorEnv((DSPROTOCOLTYPE)1, (DSNETTYPE)1);
     qDebug() << "WaveForm:m_dataSystemSDK 初始化数据采集模块";
+
     //通知读取脑电信号
     connect(m_dataSystemSDK, &hnnk::HDataSystem_interface::emitEvent
             , this, &Waveform::onReciveEegData);
@@ -583,7 +584,7 @@ void Waveform::onChooseBlueEvent(hnnk::DataAppOperator type, QString name)
     qDebug()<<" Waveform::onChooseBlueEvent "<<name;
     QVariant vv(name);
 
-    m_dataSystemSDK->eventDispatcher(type, vv);
+   //m_dataSystemSDK->eventDispatcher(type, vv);
     qDebug() << "WaveForm:m_dataSystemSDK 已连接设备：" << vv;
     //dealConnectSuccess();
 }

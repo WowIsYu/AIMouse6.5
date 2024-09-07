@@ -186,31 +186,31 @@ void VMouseMainWindow::mouseReleaseEvent(QMouseEvent *event)
     isPressedWidget = false; // 鼠标松开时，置为false
 }
 
-void VMouseMainWindow::simulateMouseClick(const QPoint &globalPos)
+
+void VMouseMainWindow::simulateMouseClick(double x, double y)
 {
     //记录原始鼠标位置
     POINT originalPos;
     GetCursorPos(&originalPos);
 
-    // 移动鼠标到指定的全局坐标
-    SetCursorPos(globalPos.x(), globalPos.y());
+    // 将控件局部坐标 (0, 0) 转换为全局坐标，即控件的左上角
+    QPoint widgetPos = this->mapToGlobal(QPoint(0, 0));
+
+    // 将鼠标移动到控件的左上角
+    SetCursorPos(widgetPos.x(), widgetPos.y());
+
+    // 如果希望点击特定位置 (x, y)，可以对 widgetPos 进行偏移
+     SetCursorPos(widgetPos.x() + x / 2, widgetPos.y() + y / 2);
 
     // 获取屏幕的宽高
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    // 转换坐标为 [0, 65535] 范围
-    int x = qBound(0, globalPos.x(), screenWidth - 1);
-    int y = qBound(0, globalPos.y(), screenHeight - 1);
-
     INPUT input = {0};
     input.type = INPUT_MOUSE;
     input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTDOWN;
-    input.mi.dx = (x * 65535) / screenWidth;
-    input.mi.dy = (y * 65535) / screenHeight;
-
-    qDebug() << "Clicking at screen coordinates:" << globalPos
-             << "with INPUT coordinates:" << input.mi.dx << input.mi.dy;
+    input.mi.dx = y;
+    input.mi.dy = x;
 
     // 模拟鼠标左键按下
     if (SendInput(1, &input, sizeof(INPUT)) == 0) {
@@ -226,5 +226,4 @@ void VMouseMainWindow::simulateMouseClick(const QPoint &globalPos)
     //恢复原始鼠标位置
     SetCursorPos(originalPos.x, originalPos.y);
 
-    qDebug() << "Simulated mouse click at:" << globalPos;
 }

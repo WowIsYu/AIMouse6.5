@@ -39,7 +39,7 @@ public:
 
     QLabel *backgroundLabel;
 
-    void simulateMouseClick(const QPoint &globalPos);
+    void simulateMouseClick(double x, double y);
 };
 
 #endif // VMOUSEMAINWINDOW_H

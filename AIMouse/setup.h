@@ -34,6 +34,8 @@ private slots:
     void on_pushButton_clicked();
 
     void on_pushButton_2_clicked();
+    //眨眼检测结果
+    void onBlinkCheckResult(int);
 
 signals:
     void attentionResult(double val);
@@ -54,6 +56,8 @@ public:
     AttentionShow *attentionShow;
 
     QPoint globalPos;
+    double globalPosx;
+    double globalPosy;
 private:
     Ui::SetUp *ui;
 

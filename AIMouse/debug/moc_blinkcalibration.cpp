@@ -50,11 +50,14 @@ static constexpr auto qt_meta_stringdata_CLASSBlinkCalibrationENDCLASS = QtMocHe
     "hnnk::DataAppOperator",
     "type",
     "name",
-    "initBlinkCali"
+    "initBlinkCali",
+    "onConnectChange",
+    "state",
+    "onBlinkCheckResult"
 );
 #else  // !QT_MOC_HAS_STRING_DATA
 struct qt_meta_stringdata_CLASSBlinkCalibrationENDCLASS_t {
-    uint offsetsAndSizes[24];
+    uint offsetsAndSizes[30];
     char stringdata0[17];
     char stringdata1[14];
     char stringdata2[1];
@@ -67,6 +70,9 @@ struct qt_meta_stringdata_CLASSBlinkCalibrationENDCLASS_t {
     char stringdata9[5];
     char stringdata10[5];
     char stringdata11[14];
+    char stringdata12[16];
+    char stringdata13[6];
+    char stringdata14[19];
 };
 #define QT_MOC_LITERAL(ofs, len) \
     uint(sizeof(qt_meta_stringdata_CLASSBlinkCalibrationENDCLASS_t::offsetsAndSizes) + ofs), len 
@@ -83,7 +89,10 @@ Q_CONSTINIT static const qt_meta_stringdata_CLASSBlinkCalibrationENDCLASS_t qt_m
         QT_MOC_LITERAL(108, 21),  // "hnnk::DataAppOperator"
         QT_MOC_LITERAL(130, 4),  // "type"
         QT_MOC_LITERAL(135, 4),  // "name"
-        QT_MOC_LITERAL(140, 13)   // "initBlinkCali"
+        QT_MOC_LITERAL(140, 13),  // "initBlinkCali"
+        QT_MOC_LITERAL(154, 15),  // "onConnectChange"
+        QT_MOC_LITERAL(170, 5),  // "state"
+        QT_MOC_LITERAL(176, 18)   // "onBlinkCheckResult"
     },
     "BlinkCalibration",
     "onCaliTrigger",
@@ -96,7 +105,10 @@ Q_CONSTINIT static const qt_meta_stringdata_CLASSBlinkCalibrationENDCLASS_t qt_m
     "hnnk::DataAppOperator",
     "type",
     "name",
-    "initBlinkCali"
+    "initBlinkCali",
+    "onConnectChange",
+    "state",
+    "onBlinkCheckResult"
 };
 #undef QT_MOC_LITERAL
 #endif // !QT_MOC_HAS_STRING_DATA
@@ -108,7 +120,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSBlinkCalibrationENDCLASS[] = {
       11,       // revision
        0,       // classname
        0,    0, // classinfo
-       5,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -116,11 +128,13 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSBlinkCalibrationENDCLASS[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   44,    2, 0x08,    1 /* Private */,
-       3,    2,   45,    2, 0x08,    2 /* Private */,
-       6,    0,   50,    2, 0x08,    5 /* Private */,
-       7,    2,   51,    2, 0x0a,    6 /* Public */,
-      11,    0,   56,    2, 0x0a,    9 /* Public */,
+       1,    0,   56,    2, 0x08,    1 /* Private */,
+       3,    2,   57,    2, 0x08,    2 /* Private */,
+       6,    0,   62,    2, 0x08,    5 /* Private */,
+       7,    2,   63,    2, 0x0a,    6 /* Public */,
+      11,    0,   68,    2, 0x0a,    9 /* Public */,
+      12,    1,   69,    2, 0x0a,   10 /* Public */,
+      14,    1,   72,    2, 0x0a,   12 /* Public */,
 
  // slots: parameters
     QMetaType::Void,
@@ -128,6 +142,8 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSBlinkCalibrationENDCLASS[] = {
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 8, QMetaType::QString,    9,   10,
     QMetaType::Void,
+    QMetaType::Void, QMetaType::Int,   13,
+    QMetaType::Void, QMetaType::Int,    2,
 
        0        // eod
 };
@@ -154,7 +170,13 @@ Q_CONSTINIT const QMetaObject BlinkCalibration::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<hnnk::DataAppOperator, std::false_type>,
         QtPrivate::TypeAndForceComplete<QString, std::false_type>,
         // method 'initBlinkCali'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onConnectChange'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'onBlinkCheckResult'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>
     >,
     nullptr
 } };
@@ -170,6 +192,8 @@ void BlinkCalibration::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
         case 2: _t->on_beginCaliButton_clicked(); break;
         case 3: _t->onChooseBlueEvent((*reinterpret_cast< std::add_pointer_t<hnnk::DataAppOperator>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[2]))); break;
         case 4: _t->initBlinkCali(); break;
+        case 5: _t->onConnectChange((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 6: _t->onBlinkCheckResult((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
         default: ;
         }
     }
@@ -194,13 +218,13 @@ int BlinkCalibration::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 5)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 5;
+        _id -= 7;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 5)
+        if (_id < 7)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 5;
+        _id -= 7;
     }
     return _id;
 }

@@ -26,6 +26,8 @@ set(PROJECT_SOURCES
   ${THIRD_PARTY_DIR}/colorswitching/colorswitching.cpp
   ${THIRD_PARTY_DIR}/qcustomplot/qcustomplot.cpp
   ${THIRD_PARTY_DIR}/tchartview/tchartview.cpp
+  ${THIRD_PARTY_DIR}/QHotkey/qhotkey.cpp
+  ${THIRD_PARTY_DIR}/QHotkey/qhotkey_win.cpp
   ui/attention.cpp
   ui/blinkcalibration.cpp
   ui/game.cpp
@@ -43,6 +45,7 @@ set(PROJECT_SOURCES
   ${THIRD_PARTY_DIR}/colorswitching/colorswitching.h
   ${THIRD_PARTY_DIR}/qcustomplot/qcustomplot.h
   ${THIRD_PARTY_DIR}/tchartview/tchartview.h
+  ${THIRD_PARTY_DIR}/QHotkey/qhotkey.h
   ui/attention.h
   ui/blinkcalibration.h
   ui/game.h
@@ -120,6 +123,7 @@ target_include_directories(app PRIVATE
     "${THIRD_PARTY_DIR}/colorswitching"
     "${THIRD_PARTY_DIR}/qcustomplot"
     "${THIRD_PARTY_DIR}/tchartview"
+    "${THIRD_PARTY_DIR}/QHotkey"
 )
 
 

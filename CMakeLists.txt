@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.20)
 # 不一定使用最后的应用名称，应用名称使用ADD_EXECUTABLE()定义
 # 语法：project(projectname [cxx] [c] [java])
 # 可以指定工程采用的语言，选项分别表示：C++, C, java， 如不指定默认支持所有语言。
-project(main VERSION 1.0)
+project(NetroLink VERSION 1.0)
 # 默认都为上面设置的main, 如果下面两个目录路径不同，则称为外部构建
 # PROJECT_SOURCE_DIR : 项目源代码目录
 # PROJECT_BINARY_DIR : 项目构建目录
@@ -30,7 +30,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 # 语法：ADD_SUBDIRECTORY(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
 add_subdirectory(libs)
 add_subdirectory(app)
-
+# 热键
+# add_subdirectory(QHotkey)
 
 # ADD_EXECUTABLE命令
 # 告诉工程生成一个可执行文件

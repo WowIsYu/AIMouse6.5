@@ -7,7 +7,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QColor>
 #include <QThread>
-// #include <qhotkey.h>
+#include <qhotkey.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,11 +15,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     process = new QProcess(this);
-    // QHotkey *hotkey = new QHotkey(QKeySequence(Qt::CTRL + Qt::Key_G), true, this);
-    // connect(hotkey, &QHotkey::activated, this, [this] () {
-    //     m_multiControl->resetLocation();
-    //     qDebug() << "坐标回正";
-    // });
+    QHotkey *hotkey = new QHotkey(QKeySequence(Qt::CTRL + Qt::Key_G), true, this);
+    connect(hotkey, &QHotkey::activated, this, [this] () {
+        m_multiControl->resetLocation();
+        qDebug() << "坐标回正";
+    });
 
     // 打开数据库连接
     db = QSqlDatabase::addDatabase("QSQLITE");

@@ -1,0 +1,25 @@
+#ifndef SUCCESSDIALOG_H
+#define SUCCESSDIALOG_H
+
+#include <QDialog>
+
+namespace Ui
+{
+    class SuccessDialog;
+}
+
+class SuccessDialog : public QDialog
+{
+    Q_OBJECT
+
+    private:
+        Ui::SuccessDialog* ui;
+
+    public:
+        SuccessDialog(QWidget* parent = nullptr);
+        ~SuccessDialog();
+
+    public:
+        void setInfo(int elapseTime, bool tracked);
+};
+#endif

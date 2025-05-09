@@ -52,10 +52,8 @@ void MainWindow::initDatabases() {
 }
 
 void MainWindow::initMuitl() {
-    //SDK初始化
-    m_multiControl = new HMultiControlSDK(this);
-    m_multiControl->setLicense("c180dec8f4d94af6be5860436ca26003");
-    m_multiControl->lauchCollector(DATA_FIRSTGENERAL, hnnk::NET_COM);     //选择协议
+
+    m_multiControl = new HMultiControlWrapper(this);
 }
 
 void MainWindow::initLogin() {
@@ -143,74 +141,37 @@ void MainWindow::onLoginSuccess()
 
 void MainWindow::initConnections() {
 
-
-    // attention相关
     connect(this, &MainWindow::emitHnnkData, attention, &Attention::onHnnkData);
     connect(attention, &Attention::emitUpdateHnnkData, this, &MainWindow::onHnnkData);
 
-    //m_pchoose相关
-    connect(m_pchooseWindow, &ChooseDevice::refreshList
-            , this, &MainWindow::onSearchDeviceList);
+    connect(m_pchooseWindow, &ChooseDevice::refreshList, this, &MainWindow::onSearchDeviceList);
+    connect(m_pchooseWindow, SIGNAL(checkSignal(hnnk::DataAppOperator, QString )), this, SLOT(onChooseBlueEvent(hnnk::DataAppOperator, QString)));
+    connect(m_multiControl, &HMultiControlWrapper::notifyDeviceNameUpdate, m_pchooseWindow, &ChooseDevice::onUpdateDeviceNameList);
 
-    connect(m_pchooseWindow, SIGNAL(checkSignal(hnnk::DataAppOperator, QString ))       //确认设备的发送信号
-            , this, SLOT(onChooseBlueEvent(hnnk::DataAppOperator, QString)));
-    connect(m_multiControl, &HMultiControlSDK::notifyDeviceNameUpdate, m_pchooseWindow, &ChooseDevice::onUpdateDeviceNameList);
-
-    // this相关
-    // 通知已经搜索完毕
-    connect(m_multiControl->m_dataSystem, &HDataSystem_interface::emitSearchNetDeviceOver
-            , this, &MainWindow::onSearchOver);
-
-    connect(m_pchooseWindow, &ChooseDevice::checkSignal, [this](hnnk::DataAppOperator dataOperator, const QString& name){
-        m_multiControl->connectDevice(name);
-        // timer->start(10000);
-    });
-    //异常消息弹出框（int type, QString msg）操作类型， 消息内容
-    connect(m_multiControl->m_dataSystem, &HDataSystem_interface::emitMsgBox
-            , this, &MainWindow::onMsg);
-    //返回由当前陀螺仪转化得到的坐标值
-    connect(m_multiControl ,&HMultiControlSDK::emitGyroData
-            ,this,&MainWindow::onGyroData);
-    //返回用户当前的眨眼检测结果（result: 1为有眨眼， 0为无）
-    connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
-            , this, &MainWindow::onBlinkDetectionResult);
-    connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
-            ,this, &MainWindow::onBlinkCheckResult);
-    connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
+    connect(m_multiControl, &HMultiControlWrapper::emitSearchNetDeviceOver, this, &MainWindow::onSearchOver);
+    connect(m_pchooseWindow, &ChooseDevice::checkSignal, m_multiControl, &HMultiControlWrapper::connectDevice);
+    connect(m_multiControl, &HMultiControlWrapper::emitMsgBox, this, &MainWindow::onMsg);
+    connect(m_multiControl ,&HMultiControlWrapper::emitGyroData, this, &MainWindow::onGyroData);
+    connect(m_multiControl, &HMultiControlWrapper::notifyBlinkDetectionResult, this, &MainWindow::onBlinkDetectionResult);
+    connect(m_multiControl, &HMultiControlWrapper::notifyBlinkDetectionResult,this, &MainWindow::onBlinkCheckResult);
+    connect(m_multiControl, &HMultiControlWrapper::notifyConnectState, [this]() {on_statusBar("设备已连接");}) ;
+    connect(m_multiControl, &HMultiControlWrapper::notifyAttenDetectionResult
             , [this](double val) {
-                double val2=val*100;
                 if (m_isDetecting) {
-                    attentionValues.append(val2);
+                    attentionValues.append(val);
                 }
-                attentionShow->onReceiveResult(val2);
-
+                attentionShow->onReceiveResult(val);
      });
-    connect(m_multiControl, &HMultiControlSDK::notifyConnectState, [this]() {
-        on_statusBar("设备已连接");
-    }) ;
 
-    //setUp相关
-    //返回用户当前的注意力检测结果
-    connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
-            , setUpUi, &SetUp::onAttenDetectionResult);
-    connect(setUpUi, &SetUp::emitSetSensitivity, [this](int value) {
-         m_multiControl->setSensitivity(value);
-    });
+    connect(m_multiControl, &HMultiControlWrapper::notifyAttenDetectionResult, setUpUi, &SetUp::onAttenDetectionResult);
+    connect(setUpUi, &SetUp::emitSetSensitivity, m_multiControl, &HMultiControlWrapper::setSensitivity);
     connect(setUpUi, &SetUp::emitStopBlinkDetection, this, &MainWindow::onStopBlinkDetection);
     connect(setUpUi, &SetUp::emitStartBlinkDetection, this, &MainWindow::onStartBlinkDetection);
     connect(setUpUi, &SetUp::emitShowAttention, this, &MainWindow::onShowAttention);
 
-    // blinkCaliUI相关
-    //眨眼校准触发信号
-    connect(m_multiControl, &HMultiControlSDK::notifyCaliTrigger
-            , blinkCaliUi, &BlinkCalibration::onCaliTrigger);
-    //返回用户当前眨眼结果分数（isOk, score）(校准是否成功， 校准结果分数)
-    connect(m_multiControl, &HMultiControlSDK::notifyCalibrationResult
-            , blinkCaliUi, &BlinkCalibration::onCalibrationResult);
-    connect(m_multiControl, &HMultiControlSDK::notifyCalibrationResult
-            , [this]() {
-        on_statusBar("校准结束");
-    });
+    connect(m_multiControl,&HMultiControlWrapper::notifyCaliTrigger, blinkCaliUi, &BlinkCalibration::onCaliTrigger);
+    connect(m_multiControl, &HMultiControlWrapper::notifyCalibrationResult, blinkCaliUi, &BlinkCalibration::onCalibrationResult);
+    connect(m_multiControl, &HMultiControlWrapper::notifyCalibrationResult, [this]() {on_statusBar("校准结束");});
     connect(blinkCaliUi, &BlinkCalibration::emitLaunchCali, this, &MainWindow::onLaunchCali);
 }
 
@@ -256,7 +217,7 @@ void MainWindow::initUI() {
 }
 
 void MainWindow::initInstance() {
-    m_multiControl->m_dataSystem->initEegDataCollectorEnv((DSPROTOCOLTYPE)1, (DSNETTYPE)1);
+    m_multiControl->initEegDataCollectorEnv((DSPROTOCOLTYPE)1, (DSNETTYPE)1);
 
     //工具类
     m_pchooseWindow = new ChooseDevice();
@@ -266,7 +227,7 @@ void MainWindow::initInstance() {
     waveFormUi = new Waveform(this, m_multiControl->m_dataSystem);
     blinkCaliUi = new BlinkCalibration(this);
     setUpUi = new SetUp(this);
-    greedySnakeGameUi = new GreedySnakeGame(this, m_multiControl);
+    greedySnakeGameUi = new GreedySnakeGame(this);
     attention = new Attention(this);
 
     //注意力显示界面

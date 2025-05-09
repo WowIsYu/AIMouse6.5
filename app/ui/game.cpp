@@ -4,9 +4,9 @@
 #include <QDir>
 #include <QByteArray>
 #include "views/mazeGame.h"
-GreedySnakeGame::GreedySnakeGame(QWidget *parent, HMultiControlSDK *m_multiControl)
+GreedySnakeGame::GreedySnakeGame(QWidget *parent)
     : QWidget(parent)
-    , m_multiControl(m_multiControl),
+    ,
     ui(new Ui::GreedySnakeGame)
 {
 
@@ -34,11 +34,11 @@ void GreedySnakeGame::on_btn_GreedySnakeGame_clicked()
     w->setWindowIcon(subIcon);
 
     //返回由当前陀螺仪转化得到的坐标值
-    connect(m_multiControl ,&HMultiControlSDK::emitGyroData
-            ,w,&SnakeGame::onGyroData);
-    //返回用户当前的注意力检测结果
-    connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
-            , w, &SnakeGame::onAttenDetectionResult);
+    // connect(m_multiControl ,&HMultiControlSDK::emitGyroData
+    //         ,w,&SnakeGame::onGyroData);
+    // //返回用户当前的注意力检测结果
+    // connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
+    //         , w, &SnakeGame::onAttenDetectionResult);
 
     w->show();
     w->setAttribute(Qt::WA_DeleteOnClose);  // 窗口关闭时自动删除

@@ -8,7 +8,7 @@
 #include <QPoint>
 #include <QString>
 
-#include "HMultiControlSDK.h"
+#include "hmulticontrolwrapper.h"
 #include "vmousemainwindow.h"
 #include "choosedevice.h"
 #include "databasemanager.h"
@@ -37,7 +37,7 @@ public:
     void initMainWindow();
 
     ChooseDevice *m_pchooseWindow = nullptr;                 // 设备选择窗口
-    HMultiControlSDK *m_multiControl = nullptr;              // 多模态综合控制SDK
+    HMultiControlWrapper *m_multiControl = nullptr;              // 多模态综合控制SDK
     VMouseMainWindow *main_vmouse = nullptr;                 // 虚拟光标图标
 
     virtual void paintEvent(QPaintEvent *event) override;    // 重绘

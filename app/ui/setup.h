@@ -29,7 +29,6 @@ public slots:
     void onAttenDetectionResult(double val);
 
 signals:
-    void sendToStatusBar(QString message);
     void emitSetSensitivity(int value);
     void emitStopBlinkDetection();
     void emitStartBlinkDetection(int choice);

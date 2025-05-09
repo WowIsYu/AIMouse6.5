@@ -80,7 +80,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         res.qrc
-        ui/databasemanager.cpp ui/databasemanager.h
+        core/databasemanager.cpp core/databasemanager.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET app APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -117,6 +117,7 @@ target_include_directories(app PRIVATE
     "${CMAKE_SOURCE_DIR}/libs/Maze/headers"
     ui
     toolUi
+    core
 
     # 第三方库头文件
     "${THIRD_PARTY_DIR}/HMultiControlSDK/include"

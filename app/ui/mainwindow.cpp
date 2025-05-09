@@ -14,12 +14,32 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    process = new QProcess(this);
-    QHotkey *hotkey = new QHotkey(QKeySequence(Qt::CTRL + Qt::Key_G), true, this);
-    connect(hotkey, &QHotkey::activated, this, [this] () {
-        m_multiControl->resetLocation();
-        qDebug() << "坐标回正";
-    });
+
+    initDatabases();
+
+    initMuitl();
+
+    initLogin();
+
+
+}
+
+MainWindow::~MainWindow()
+{
+    // 安全释放资源
+    if (waveFormUi) delete waveFormUi;
+    if (blinkCaliUi) delete blinkCaliUi;
+    if (greedySnakeGameUi) delete greedySnakeGameUi;
+    if (attention) delete attention;
+    if (setUpUi) delete setUpUi;
+    if (btnGroup) delete btnGroup;
+    if (main_vmouse) delete main_vmouse;
+    if (m_pchooseWindow) delete m_pchooseWindow;
+
+    delete ui;
+}
+
+void MainWindow::initDatabases() {
     dbManager = new DatabaseManager(this);
     if (!dbManager->initializeUserDatabase()) {
         qCritical() << "Failed to initialize User database!";
@@ -29,18 +49,16 @@ MainWindow::MainWindow(QWidget *parent)
         qCritical() << "Failed to initialize HnnkData database!";
     }
 
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &MainWindow::onUpdateBattaryStatus);
+}
 
+void MainWindow::initMuitl() {
     //SDK初始化
-    m_multiControl = new HMultiControlSDK(parent);
-    qDebug() << "m_multiControl 已创建单例";
-    //设置License
+    m_multiControl = new HMultiControlSDK(this);
     m_multiControl->setLicense("c180dec8f4d94af6be5860436ca26003");
-    qDebug() << "m_multiControl 已设置License授权码";
-    //启动数据采集模块
     m_multiControl->lauchCollector(DATA_FIRSTGENERAL, hnnk::NET_COM);     //选择协议
-    qDebug() << "m_multiControl 已初始化数据采集模块";
+}
+
+void MainWindow::initLogin() {
     //登录界面
     m_login = new Login();
     qDebug() << "MainWindow:Login 已创建实例";
@@ -51,65 +69,95 @@ MainWindow::MainWindow(QWidget *parent)
         exit(0);
     });
 
-    connect(m_login, &Login::onInsertUser, [this](QString acct, QString pwd, bool isChecked) {
-        MainWindow::insertUser(acct,  pwd, isChecked);
-    });
-
-
+    // 加载选择记住密码的用户
     loadRemembered();
 
     // 连接信号和槽
+    connect(m_login, &Login::onInsertUser, this,&MainWindow::insertUser);
+
+    //登录相关
     connect(m_login, &Login::emitLogin, this, &MainWindow::onLogin);
     connect(this, &MainWindow::emitLoginResult, m_login, &Login::onLoginResult);
 
+    //注册相关
     connect(m_login, &Login::emitRegister, this, &MainWindow::onRegister);
     connect(this, &MainWindow::emitRegisterResult, m_login, &Login::onRegisterResult);
 
-
+    //校验码
     connect(m_login, &Login::emitGraphCode, this, &MainWindow::onGraphCode);
     connect(this, &MainWindow::emitGraphCode, m_login, &Login::onGraphCode);
-
-
 }
 
-MainWindow::~MainWindow()
+/**
+ * 入口
+ * @brief MainWindow::initMainWindow
+ */
+void MainWindow::initMainWindow()
 {
-    // db.close();
-
-    // 安全释放资源
-    if (waveFormUi) delete waveFormUi;
-    if (blinkCaliUi) delete blinkCaliUi;
-    if (greedySnakeGameUi) delete greedySnakeGameUi;
-    if (attention) delete attention;
-    if (setUpUi) delete setUpUi;
-    if (btnGroup) delete btnGroup;
-    // if (main_vmouse) delete main_vmouse;
-    // if (m_pchooseWindow) delete m_pchooseWindow;
-
-    delete ui;
+    //进入页面时显示登录界面
+    m_login->setWindowModality(Qt::ApplicationModal);
+    m_login->setWindowFlags(m_login->windowFlags() | Qt::WindowStaysOnTopHint);
+    m_login->show();
+    m_login->raise();
+    this->hide();
 }
 
 
+void MainWindow::onLoginSuccess()
+{
+    qDebug() << "登录成功";
+
+    m_login->setStatusBar("正在加载页面，请稍后");
+    QCoreApplication::processEvents(); // 处理事件
+
+    initInstance();
+    initConnections();
+
+    initUI();
+
+    //开启线程来开AI
+    process = new QProcess(this);
+
+    //开启热键
+    QHotkey *hotkey = new QHotkey(QKeySequence(Qt::CTRL + Qt::Key_G), true, this);
+    connect(hotkey, &QHotkey::activated, this, [this] () {
+        m_multiControl->resetLocation();
+        qDebug() << "坐标回正";
+    });
+
+    // 开启定时器
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &MainWindow::onUpdateBattaryStatus);
+
+    m_login->setStatusBar("界面已加载完毕，欢迎使用！");
+
+    // 延迟 1 秒后隐藏登录窗口并显示主窗口
+    QTimer::singleShot(500, this, [this] {
+        m_login->hide();
+        this->show();
+    });
+
+
+}
 
 
 void MainWindow::initConnections() {
 
-    // connect(m_pchooseWindow, &ChooseDevice::checkSignal, [this](hnnk::DataAppOperator dataOperator, const QString& name){
-    //     m_multiControl->connectDevice(name);
-    // });
-    connect(setUpUi, &SetUp::sendToStatusBar, this, &MainWindow::on_statusBar);
 
-    //更行数据
+    // attention相关
     connect(this, &MainWindow::emitHnnkData, attention, &Attention::onHnnkData);
     connect(attention, &Attention::emitUpdateHnnkData, this, &MainWindow::onHnnkData);
 
+    //m_pchoose相关
     connect(m_pchooseWindow, &ChooseDevice::refreshList
             , this, &MainWindow::onSearchDeviceList);
 
     connect(m_pchooseWindow, SIGNAL(checkSignal(hnnk::DataAppOperator, QString ))       //确认设备的发送信号
             , this, SLOT(onChooseBlueEvent(hnnk::DataAppOperator, QString)));
+    connect(m_multiControl, &HMultiControlSDK::notifyDeviceNameUpdate, m_pchooseWindow, &ChooseDevice::onUpdateDeviceNameList);
 
-    //通知已经搜索完毕
+    // this相关
+    // 通知已经搜索完毕
     connect(m_multiControl->m_dataSystem, &HDataSystem_interface::emitSearchNetDeviceOver
             , this, &MainWindow::onSearchOver);
 
@@ -117,28 +165,17 @@ void MainWindow::initConnections() {
         m_multiControl->connectDevice(name);
         // timer->start(10000);
     });
-
     //异常消息弹出框（int type, QString msg）操作类型， 消息内容
     connect(m_multiControl->m_dataSystem, &HDataSystem_interface::emitMsgBox
             , this, &MainWindow::onMsg);
-
-    connect(m_multiControl, &HMultiControlSDK::notifyDeviceNameUpdate, m_pchooseWindow, &ChooseDevice::onUpdateDeviceNameList);
-
-
     //返回由当前陀螺仪转化得到的坐标值
     connect(m_multiControl ,&HMultiControlSDK::emitGyroData
             ,this,&MainWindow::onGyroData);
-
-
     //返回用户当前的眨眼检测结果（result: 1为有眨眼， 0为无）
     connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
             , this, &MainWindow::onBlinkDetectionResult);
     connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
             ,this, &MainWindow::onBlinkCheckResult);
-
-    //返回用户当前的注意力检测结果
-    connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
-            , setUpUi, &SetUp::onAttenDetectionResult);
     connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
             , [this](double val) {
                 double val2=val*100;
@@ -148,32 +185,22 @@ void MainWindow::initConnections() {
                 attentionShow->onReceiveResult(val2);
 
      });
+    connect(m_multiControl, &HMultiControlSDK::notifyConnectState, [this]() {
+        on_statusBar("设备已连接");
+    }) ;
+
+    //setUp相关
+    //返回用户当前的注意力检测结果
+    connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
+            , setUpUi, &SetUp::onAttenDetectionResult);
     connect(setUpUi, &SetUp::emitSetSensitivity, [this](int value) {
          m_multiControl->setSensitivity(value);
     });
-
-    connect(setUpUi, &SetUp::emitStopBlinkDetection, [this]() {
-        // 调用SDK停止算法检测
-        m_multiControl->stopBlinkDetection();
-
-        on_statusBar("算法检测已停止");
-
-        // 记录结束时间
-        endTime = QDateTime::currentDateTime();
-        m_isDetecting = false;
-
-        if (!attentionValues.isEmpty()) {
-            calculateAttentionStats();
-            // 插入到数据库
-            insertHnnkData(account, startTime, endTime, averageAttention, minAttention, maxAttention, medianAttention);
-            drawBar();
-        }
-    });
-
+    connect(setUpUi, &SetUp::emitStopBlinkDetection, this, &MainWindow::onStopBlinkDetection);
     connect(setUpUi, &SetUp::emitStartBlinkDetection, this, &MainWindow::onStartBlinkDetection);
-
     connect(setUpUi, &SetUp::emitShowAttention, this, &MainWindow::onShowAttention);
 
+    // blinkCaliUI相关
     //眨眼校准触发信号
     connect(m_multiControl, &HMultiControlSDK::notifyCaliTrigger
             , blinkCaliUi, &BlinkCalibration::onCaliTrigger);
@@ -184,10 +211,6 @@ void MainWindow::initConnections() {
             , [this]() {
         on_statusBar("校准结束");
     });
-    connect(m_multiControl, &HMultiControlSDK::notifyConnectState, [this]() {
-        on_statusBar("设备已连接");
-    }) ;
-
     connect(blinkCaliUi, &BlinkCalibration::emitLaunchCali, this, &MainWindow::onLaunchCali);
 }
 
@@ -230,71 +253,9 @@ void MainWindow::initUI() {
     QIcon ButtonIconMin(pixmapMin.scaled(ui->btn_min->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation)); // 按钮大小适应
     ui->btn_min->setIcon(ButtonIconMin);
     ui->btn_min->setIconSize(ui->btn_min->size()); // 设置图标大小为按钮大小
-
 }
 
-void MainWindow::paintEvent(QPaintEvent *event)
-{
-    QStyleOption opt;
-    opt.initFrom(this);
-    QPainter painter(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &opt, &painter, this);
-}
-
-// 简化鼠标事件处理
-void MainWindow::mousePressEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton) {
-        m_leftMousePressed = true;
-        m_StartPoint = event->globalPos();
-    }
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent *event)
-{
-    if (m_leftMousePressed) {
-        QPoint delta = event->globalPos() - m_StartPoint;
-        move(pos() + delta);
-        m_StartPoint = event->globalPos();
-    }
-}
-
-
-void MainWindow::mouseReleaseEvent(QMouseEvent *event)
-{
-    m_leftMousePressed = false;//释放鼠标，标志位置为假
-}
-
-
-void MainWindow::keyPressEvent(QKeyEvent *event) {
-    // if ((event->modifiers() & Qt::ControlModifier) && event->key() == Qt::Key_G) {
-    //     m_multiControl->resetLocation();
-    //     qDebug() << "坐标回正";
-    // }
-}
-
-/**
- * 入口
- * @brief MainWindow::initMainWindow
- */
-void MainWindow::initMainWindow()
-{
-    //进入页面时显示登录界面
-    m_login->setWindowModality(Qt::ApplicationModal);
-    m_login->setWindowFlags(m_login->windowFlags() | Qt::WindowStaysOnTopHint);
-    m_login->show();
-    m_login->raise();
-    this->hide();
-}
-
-void MainWindow::onLoginSuccess()
-{
-    qDebug() << "登录成功";
-
-    m_login->setStatusBar("正在加载页面，请稍后");
-    QCoreApplication::processEvents(); // 处理事件
-    // 实例化
-    // m_dataSystemSDK = new hnnk::HDataSystem_interface();
+void MainWindow::initInstance() {
     m_multiControl->m_dataSystem->initEegDataCollectorEnv((DSPROTOCOLTYPE)1, (DSNETTYPE)1);
 
     //工具类
@@ -308,62 +269,8 @@ void MainWindow::onLoginSuccess()
     greedySnakeGameUi = new GreedySnakeGame(this, m_multiControl);
     attention = new Attention(this);
 
-    //发送注意力值给attentionShow
+    //注意力显示界面
     attentionShow = new Nagano(this);
-
-
-    initConnections();
-    initUI();
-
-    m_login->setStatusBar("界面已加载完毕，欢迎使用！");
-
-    // 延迟 1 秒后隐藏登录窗口并显示主窗口
-    QTimer::singleShot(500, this, [this] {
-        m_login->hide();
-        this->show();
-    });
-
-}
-
-QString MainWindow::getLastModelFile()
-{
-    QString modelName;
-    //读取默认的模型文件目录
-    QDir modelDir = m_multiControl->getModelDir();
-    qDebug() << modelDir;
-    //读取默认最近的模型文件名
-    modelDir.setFilter(QDir::Files | QDir::NoDotAndDotDot | QDir::Dirs);
-    QList<QFileInfo> fileInfos = modelDir.entryInfoList(QDir::AllEntries, QDir::Time);
-    if(fileInfos.size() > 2){
-        for(auto it : fileInfos){
-            if(it.isFile()){
-                modelName = it.fileName();       //找到最近生成的文件
-                break;
-            }
-        }
-    }
-    qDebug() << modelName;
-    return modelName;
-}
-
-void MainWindow::calculateAttentionStats()
-{
-    Q_ASSERT(!attentionValues.isEmpty());
-
-    // 使用STL算法计算
-    auto [minIt, maxIt] = std::minmax_element(attentionValues.begin(), attentionValues.end());
-    minAttention = *minIt;
-    maxAttention = *maxIt;
-
-    averageAttention = std::accumulate(attentionValues.begin(), attentionValues.end(), 0.0) /
-                       attentionValues.size();
-
-    // 计算中值
-    std::sort(attentionValues.begin(), attentionValues.end());
-    size_t size = attentionValues.size();
-    medianAttention = (size % 2 == 0) ?
-                          (attentionValues[size/2 - 1] + attentionValues[size/2]) / 2.0 :
-                          attentionValues[size/2];
 }
 
 void MainWindow::on_statusBar(QString message) {
@@ -406,6 +313,7 @@ void MainWindow::loadRemembered() {
 
 }
 
+// 登录成功
 void MainWindow::insertUser(QString acct, QString pwd, bool isChecked)
 {
 
@@ -413,8 +321,6 @@ void MainWindow::insertUser(QString acct, QString pwd, bool isChecked)
     //     QMessageBox::warning(this, "登录失败", "账号不存在");
     //     return;
     // }
-
-    // 登录成功
 
     User newUser;
     newUser.account       = acct;
@@ -535,14 +441,21 @@ void MainWindow::onStartBlinkDetection(int choice)
 
 }
 
-void MainWindow::onShowAttention()
+void MainWindow::onStopBlinkDetection()
 {
-    attentionShow->show();
-}
+    // 调用SDK停止算法检测
+    m_multiControl->stopBlinkDetection();
+    on_statusBar("算法检测已停止");
+    // 记录结束时间
+    endTime = QDateTime::currentDateTime();
+    m_isDetecting = false;
 
-void MainWindow::on_btnConnectDevice_clicked()
-{
-    m_pchooseWindow->showTopwindow();
+    if (!attentionValues.isEmpty()) {
+        calculateAttentionStats();
+        // 插入到数据库
+        insertHnnkData(account, startTime, endTime, averageAttention, minAttention, maxAttention, medianAttention);
+        drawBar();
+    }
 }
 
 void MainWindow::onMsg(int type, QString msg)
@@ -558,28 +471,13 @@ void MainWindow::onMsg(int type, QString msg)
     //m_pchooseWindow->setFlashText("刷新");
 }
 
-void MainWindow::onGyroData(double x, double y)
-{
-    globalPosx = x;
-    globalPosy = y;
-    main_vmouse->move(x,y);
-}
 
 void MainWindow::onBlinkDetectionResult(int val)
 {
     if(val > 0){
         qDebug()<<"onBlinkCheckResult "<<val;
-        //m_colorSwithing.doColorSwitching(ui->label_blink);
-        if(1 == val)
-        {
-            qDebug() << "单眨眼";
-        }
-        //ui->blinktimes->setText(u8"单眨眼");
-        else
-        {
-            qDebug() << "双眨眼";
-        }
-        //ui->blinktimes->setText(u8"双眨眼");
+        if(1 == val) qDebug() << "单眨眼";
+        else qDebug() << "双眨眼";
     }
 }
 
@@ -600,9 +498,110 @@ void MainWindow::onBlinkCheckResult(int val)
     }
 }
 
+QString MainWindow::getLastModelFile()
+{
+    QString modelName;
+    //读取默认的模型文件目录
+    QDir modelDir = m_multiControl->getModelDir();
+    qDebug() << modelDir;
+    //读取默认最近的模型文件名
+    modelDir.setFilter(QDir::Files | QDir::NoDotAndDotDot | QDir::Dirs);
+    QList<QFileInfo> fileInfos = modelDir.entryInfoList(QDir::AllEntries, QDir::Time);
+    if(fileInfos.size() > 2){
+        for(auto it : fileInfos){
+            if(it.isFile()){
+                modelName = it.fileName();       //找到最近生成的文件
+                break;
+            }
+        }
+    }
+    qDebug() << modelName;
+    return modelName;
+}
+
+void MainWindow::calculateAttentionStats()
+{
+    Q_ASSERT(!attentionValues.isEmpty());
+
+    // 使用STL算法计算
+    auto [minIt, maxIt] = std::minmax_element(attentionValues.begin(), attentionValues.end());
+    minAttention = *minIt;
+    maxAttention = *maxIt;
+
+    averageAttention = std::accumulate(attentionValues.begin(), attentionValues.end(), 0.0) /
+                       attentionValues.size();
+
+    // 计算中值
+    std::sort(attentionValues.begin(), attentionValues.end());
+    size_t size = attentionValues.size();
+    medianAttention = (size % 2 == 0) ?
+                          (attentionValues[size/2 - 1] + attentionValues[size/2]) / 2.0 :
+                          attentionValues[size/2];
+}
+
+
+void MainWindow::onGyroData(double x, double y)
+{
+    globalPosx = x;
+    globalPosy = y;
+    main_vmouse->move(x,y);
+}
+
+
 void MainWindow::onUpdateBattaryStatus()
 {
     int battary = m_multiControl->m_dataSystem->getParameter().m_battaryStatus;
     qDebug() << "battary" << battary;
     ui->barBattary->setValue(battary);
+}
+
+
+void MainWindow::onShowAttention()
+{
+    attentionShow->show();
+}
+
+void MainWindow::on_btnConnectDevice_clicked()
+{
+    m_pchooseWindow->showTopwindow();
+}
+
+void MainWindow::paintEvent(QPaintEvent *event)
+{
+    QStyleOption opt;
+    opt.initFrom(this);
+    QPainter painter(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &painter, this);
+}
+
+// 简化鼠标事件处理
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        m_leftMousePressed = true;
+        m_StartPoint = event->globalPos();
+    }
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_leftMousePressed) {
+        QPoint delta = event->globalPos() - m_StartPoint;
+        move(pos() + delta);
+        m_StartPoint = event->globalPos();
+    }
+}
+
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *event)
+{
+    m_leftMousePressed = false;//释放鼠标，标志位置为假
+}
+
+
+void MainWindow::keyPressEvent(QKeyEvent *event) {
+    // if ((event->modifiers() & Qt::ControlModifier) && event->key() == Qt::Key_G) {
+    //     m_multiControl->resetLocation();
+    //     qDebug() << "坐标回正";
+    // }
 }

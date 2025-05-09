@@ -70,6 +70,7 @@ public slots:
     //void sendCheckSignal();
 
     //void radioClick();
+    void onUpdateDeviceNameList(QString devices);
 
 signals:
     /**

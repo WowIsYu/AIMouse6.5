@@ -1,8 +1,5 @@
 #include "game.h"
-#include "qsqlerror.h"
-#include "qsqlquery.h"
 #include "ui_game.h"
-// #include "widget.h"
 #include "snakegame.h"
 #include <QDir>
 #include <QByteArray>
@@ -54,12 +51,6 @@ void GreedySnakeGame::on_btn_BlackPuzzle_clicked()
     // QIcon subIcon(":/img/snake.ico");
     // w->setWindowIcon(subIcon);
     w->initialize();
-    // //返回由当前陀螺仪转化得到的坐标值
-    // connect(m_multiControl ,&HMultiControlSDK::emitGyroData
-    //         ,w,&SnakeGame::onGyroData);
-    // //返回用户当前的注意力检测结果
-    // connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
-    //         , w, &SnakeGame::onAttenDetectionResult);
 
     w->show();
     w->setAttribute(Qt::WA_DeleteOnClose);  // 窗口关闭时自动删除

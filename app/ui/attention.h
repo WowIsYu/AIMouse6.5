@@ -2,13 +2,11 @@
 #define ATTENTION_H
 
 #include <QMainWindow>
-#include <QSqlDatabase>
 #include <QStandardItemModel>
 #include <QItemSelectionModel>
 #include <QBarSet>
-#include <QSqlTableModel>
 #include <QtCharts>
-
+#include "databasemanager.h"
 // 列编号
 #define     COL_ID       0
 #define     COL_ACCOUNT      1
@@ -31,20 +29,19 @@ public:
     void removeAllAxis(QChart *chart);
     void countData();
     void drawBarChartForWeek(const QDate &date, bool isVertical = true);
-    void insertAttentionRecord(const QString &account, const QDateTime &startTime, const QDateTime &endTime,
-                                          qreal averageAttention, qreal minAttention, qreal maxAttention, qreal medianAttention);
-    void insertUser(const QString &account, const QString &password);
     void loadDataFromDatabase();
 private:
     Ui::Attention *ui;
-    QSqlDatabase db;
     QStandardItemModel *dataModel;
-    QSqlTableModel *sqlModel;
+    QList<HNNKData> dataList;
 
-    void setupDatabase();
     void generateRandomData();
     void iniBarChart();
     void drawBarChart();
+signals:
+    void emitUpdateHnnkData();
+public slots:
+    void onHnnkData(QList<HNNKData>);
 
 private slots:
     void on_toolBtn_GenData_clicked();
@@ -53,6 +50,7 @@ private slots:
     void do_barClicked(int index, QBarSet *barset);
     void do_pieHovered(QPieSlice *slice, bool state);
     void on_btnBuildBarChart_clicked();
+    void on_pushButton_clicked();
 };
 
 #endif // ATTENTION_H

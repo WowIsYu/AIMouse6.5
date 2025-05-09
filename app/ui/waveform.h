@@ -10,15 +10,12 @@
 #include <QPushButton>
 #include <QMenuBar>
 #include <vector>
-
-#include "choosedevice.h"
 #include "markingtester.h"
 
 
 #include "hdatasystem_interface.h"
 #include "dataset.h"
 
-// #include "qcustomplot.h"
 #include "qcustomplot.h"
 
 using namespace hnnk;
@@ -39,7 +36,7 @@ class Waveform : public QWidget
     Q_OBJECT
 
 public:
-    explicit Waveform(QWidget *parent = nullptr, hnnk::HDataSystem_interface *m_dataSystemSDK = nullptr, ChooseDevice *m_pchooseWindow = nullptr);
+    explicit Waveform(QWidget *parent = nullptr, hnnk::HDataSystem_interface *m_dataSystemSDK = nullptr);
     ~Waveform();
     /**
      * @brief setupPlotEdfChan 绘制edf通道波形
@@ -52,7 +49,6 @@ public:
      * @param index2 参数2是通信协议类型
      */
     void lauchCollector(int index1,int index2);
-    void toggleConnect();
 
     void setUi();
 private slots:
@@ -80,7 +76,6 @@ private slots:
      */
     void onDealManualMarking(int markVal);
 
-    void onMsg(int type, QString msg);
     void on_btn_trapFilter_clicked();
 
     void on_btn_open_clicked();
@@ -92,8 +87,6 @@ private slots:
     void on_btn_start_record_clicked();
 
     void on_btn_stop_acquisition_clicked();
-
-    void on_btn_bluetooth_clicked();
 
 public:
     QString m_edfWritePath;   ///edf文件写入路径
@@ -145,12 +138,6 @@ public slots:
     void onAddtionData(QVector<GYRODATA> gyroDatas, QVector<unsigned char>channoff, double battery);
 
     /**
-     * @brief deviceActive 搜索到的设备名信息：名称由两部分组成：name:mac
-     * @param devices
-     */
-    void onDeviceNameUpdate(QString devices);
-
-    /**
      * @brief onConnectUpdate 设备连接状态
      */
     void onConnectUpdate(CONNECTUPDATE);
@@ -172,11 +159,6 @@ public slots:
      * @return
      */
     void  onReadEdfDataToDouble(QVector<hnnk::DataPoint> &dVecs, QVariant &otherData, int ch);
-
-    /**
-     * @brief onSearchOver
-     */
-    void onSearchOver();
 
 
 private:
@@ -207,7 +189,6 @@ private:
     void clearScreen();
 
 public:
-    ChooseDevice *m_pchooseWindow;          ///设备选择窗口
     hnnk::HDataSystem_interface *m_dataSystemSDK;      ///数据采集SDK实例
 public: signals:
     void sendToStatusBar(QString Message);

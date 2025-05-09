@@ -20,14 +20,17 @@ MainWindow::MainWindow(QWidget *parent)
         m_multiControl->resetLocation();
         qDebug() << "坐标回正";
     });
-
-    // 打开数据库连接
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("attention_data.db");
-    if (!db.open()) {
-        qDebug() << "Error: unable to open database";
-        return;
+    dbManager = new DatabaseManager(this);
+    if (!dbManager->initializeUserDatabase()) {
+        qCritical() << "Failed to initialize User database!";
     }
+    dbManager = new DatabaseManager(this);
+    if (!dbManager->initializeHnnkDatabase()) {
+        qCritical() << "Failed to initialize HnnkData database!";
+    }
+
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &MainWindow::onUpdateBattaryStatus);
 
     //SDK初始化
     m_multiControl = new HMultiControlSDK(parent);
@@ -39,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_multiControl->lauchCollector(DATA_FIRSTGENERAL, hnnk::NET_COM);     //选择协议
     qDebug() << "m_multiControl 已初始化数据采集模块";
     //登录界面
-    m_login = new Login(m_multiControl);
+    m_login = new Login();
     qDebug() << "MainWindow:Login 已创建实例";
 
     connect(m_login, &Login::onLoginClose, []() {
@@ -48,15 +51,30 @@ MainWindow::MainWindow(QWidget *parent)
         exit(0);
     });
 
+    connect(m_login, &Login::onInsertUser, [this](QString acct, QString pwd, bool isChecked) {
+        MainWindow::insertUser(acct,  pwd, isChecked);
+    });
+
+
+    loadRemembered();
+
     // 连接信号和槽
-    connect(m_login, &Login::notifyLoginResult, this, &MainWindow::onLoginSuccess);
+    connect(m_login, &Login::emitLogin, this, &MainWindow::onLogin);
+    connect(this, &MainWindow::emitLoginResult, m_login, &Login::onLoginResult);
+
+    connect(m_login, &Login::emitRegister, this, &MainWindow::onRegister);
+    connect(this, &MainWindow::emitRegisterResult, m_login, &Login::onRegisterResult);
+
+
+    connect(m_login, &Login::emitGraphCode, this, &MainWindow::onGraphCode);
+    connect(this, &MainWindow::emitGraphCode, m_login, &Login::onGraphCode);
 
 
 }
 
 MainWindow::~MainWindow()
 {
-    db.close();
+    // db.close();
 
     // 安全释放资源
     if (waveFormUi) delete waveFormUi;
@@ -72,18 +90,105 @@ MainWindow::~MainWindow()
 }
 
 
+
+
 void MainWindow::initConnections() {
+
+    // connect(m_pchooseWindow, &ChooseDevice::checkSignal, [this](hnnk::DataAppOperator dataOperator, const QString& name){
+    //     m_multiControl->connectDevice(name);
+    // });
+    connect(setUpUi, &SetUp::sendToStatusBar, this, &MainWindow::on_statusBar);
+
+    //更行数据
+    connect(this, &MainWindow::emitHnnkData, attention, &Attention::onHnnkData);
+    connect(attention, &Attention::emitUpdateHnnkData, this, &MainWindow::onHnnkData);
+
+    connect(m_pchooseWindow, &ChooseDevice::refreshList
+            , this, &MainWindow::onSearchDeviceList);
+
+    connect(m_pchooseWindow, SIGNAL(checkSignal(hnnk::DataAppOperator, QString ))       //确认设备的发送信号
+            , this, SLOT(onChooseBlueEvent(hnnk::DataAppOperator, QString)));
+
+    //通知已经搜索完毕
+    connect(m_multiControl->m_dataSystem, &HDataSystem_interface::emitSearchNetDeviceOver
+            , this, &MainWindow::onSearchOver);
 
     connect(m_pchooseWindow, &ChooseDevice::checkSignal, [this](hnnk::DataAppOperator dataOperator, const QString& name){
         m_multiControl->connectDevice(name);
+        // timer->start(10000);
     });
 
-    // 获取各个控件的信息
-    connect(blinkCaliUi, &BlinkCalibration::sendToStatusBar, this, &MainWindow::on_statusBar);
-    connect(setUpUi, &SetUp::sendToStatusBar, this, &MainWindow::on_statusBar);
-    connect(this, &MainWindow::emitChangeDevice_waveform, waveFormUi, &Waveform::onChooseBlueEvent);
-    connect(setUpUi, &SetUp::updateDatabase, this, &MainWindow::drawBar);
+    //异常消息弹出框（int type, QString msg）操作类型， 消息内容
+    connect(m_multiControl->m_dataSystem, &HDataSystem_interface::emitMsgBox
+            , this, &MainWindow::onMsg);
 
+    connect(m_multiControl, &HMultiControlSDK::notifyDeviceNameUpdate, m_pchooseWindow, &ChooseDevice::onUpdateDeviceNameList);
+
+
+    //返回由当前陀螺仪转化得到的坐标值
+    connect(m_multiControl ,&HMultiControlSDK::emitGyroData
+            ,this,&MainWindow::onGyroData);
+
+
+    //返回用户当前的眨眼检测结果（result: 1为有眨眼， 0为无）
+    connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
+            , this, &MainWindow::onBlinkDetectionResult);
+    connect(m_multiControl, &HMultiControlSDK::notifyBlinkDetectionResult
+            ,this, &MainWindow::onBlinkCheckResult);
+
+    //返回用户当前的注意力检测结果
+    connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
+            , setUpUi, &SetUp::onAttenDetectionResult);
+    connect(m_multiControl, &HMultiControlSDK::notifyAttenDetectionResult
+            , [this](double val) {
+                double val2=val*100;
+                if (m_isDetecting) {
+                    attentionValues.append(val2);
+                }
+                attentionShow->onReceiveResult(val2);
+
+     });
+    connect(setUpUi, &SetUp::emitSetSensitivity, [this](int value) {
+         m_multiControl->setSensitivity(value);
+    });
+
+    connect(setUpUi, &SetUp::emitStopBlinkDetection, [this]() {
+        // 调用SDK停止算法检测
+        m_multiControl->stopBlinkDetection();
+
+        on_statusBar("算法检测已停止");
+
+        // 记录结束时间
+        endTime = QDateTime::currentDateTime();
+        m_isDetecting = false;
+
+        if (!attentionValues.isEmpty()) {
+            calculateAttentionStats();
+            // 插入到数据库
+            insertHnnkData(account, startTime, endTime, averageAttention, minAttention, maxAttention, medianAttention);
+            drawBar();
+        }
+    });
+
+    connect(setUpUi, &SetUp::emitStartBlinkDetection, this, &MainWindow::onStartBlinkDetection);
+
+    connect(setUpUi, &SetUp::emitShowAttention, this, &MainWindow::onShowAttention);
+
+    //眨眼校准触发信号
+    connect(m_multiControl, &HMultiControlSDK::notifyCaliTrigger
+            , blinkCaliUi, &BlinkCalibration::onCaliTrigger);
+    //返回用户当前眨眼结果分数（isOk, score）(校准是否成功， 校准结果分数)
+    connect(m_multiControl, &HMultiControlSDK::notifyCalibrationResult
+            , blinkCaliUi, &BlinkCalibration::onCalibrationResult);
+    connect(m_multiControl, &HMultiControlSDK::notifyCalibrationResult
+            , [this]() {
+        on_statusBar("校准结束");
+    });
+    connect(m_multiControl, &HMultiControlSDK::notifyConnectState, [this]() {
+        on_statusBar("设备已连接");
+    }) ;
+
+    connect(blinkCaliUi, &BlinkCalibration::emitLaunchCali, this, &MainWindow::onLaunchCali);
 }
 
 void MainWindow::initUI() {
@@ -197,11 +302,15 @@ void MainWindow::onLoginSuccess()
     main_vmouse = new VMouseMainWindow();
 
     // Ui界面
-    waveFormUi = new Waveform(this, m_multiControl->m_dataSystem, m_pchooseWindow);
-    blinkCaliUi = new BlinkCalibration(this, m_multiControl);
-    setUpUi = new SetUp(this, m_multiControl, main_vmouse);
+    waveFormUi = new Waveform(this, m_multiControl->m_dataSystem);
+    blinkCaliUi = new BlinkCalibration(this);
+    setUpUi = new SetUp(this);
     greedySnakeGameUi = new GreedySnakeGame(this, m_multiControl);
     attention = new Attention(this);
+
+    //发送注意力值给attentionShow
+    attentionShow = new Nagano(this);
+
 
     initConnections();
     initUI();
@@ -216,6 +325,47 @@ void MainWindow::onLoginSuccess()
 
 }
 
+QString MainWindow::getLastModelFile()
+{
+    QString modelName;
+    //读取默认的模型文件目录
+    QDir modelDir = m_multiControl->getModelDir();
+    qDebug() << modelDir;
+    //读取默认最近的模型文件名
+    modelDir.setFilter(QDir::Files | QDir::NoDotAndDotDot | QDir::Dirs);
+    QList<QFileInfo> fileInfos = modelDir.entryInfoList(QDir::AllEntries, QDir::Time);
+    if(fileInfos.size() > 2){
+        for(auto it : fileInfos){
+            if(it.isFile()){
+                modelName = it.fileName();       //找到最近生成的文件
+                break;
+            }
+        }
+    }
+    qDebug() << modelName;
+    return modelName;
+}
+
+void MainWindow::calculateAttentionStats()
+{
+    Q_ASSERT(!attentionValues.isEmpty());
+
+    // 使用STL算法计算
+    auto [minIt, maxIt] = std::minmax_element(attentionValues.begin(), attentionValues.end());
+    minAttention = *minIt;
+    maxAttention = *maxIt;
+
+    averageAttention = std::accumulate(attentionValues.begin(), attentionValues.end(), 0.0) /
+                       attentionValues.size();
+
+    // 计算中值
+    std::sort(attentionValues.begin(), attentionValues.end());
+    size_t size = attentionValues.size();
+    medianAttention = (size % 2 == 0) ?
+                          (attentionValues[size/2 - 1] + attentionValues[size/2]) / 2.0 :
+                          attentionValues[size/2];
+}
+
 void MainWindow::on_statusBar(QString message) {
     ui->statusBar->showMessage(message, 5000);
 }
@@ -224,7 +374,6 @@ void MainWindow::drawBar()
 {
     attention->loadDataFromDatabase();
     attention->drawBarChartForWeek(QDate::currentDate(), true);
-
 }
 
 
@@ -241,3 +390,219 @@ void MainWindow::on_btnAI_clicked()
 
 }
 
+void MainWindow::loadRemembered() {
+    // 查找所有 savePassword=true 的用户，这里只取第一个
+    auto users = dbManager->getAllUsers();
+    for (const auto &u : std::as_const(users)) {
+        qDebug() << u.addTime;
+        if (u.savePassword) {
+            // ui->editAccount->setText(u.account);
+            // ui->editPassword->setText(u.password);
+            // ui->chkRemember->setChecked(true);
+            m_login->onLoadRemembered(u.account, u.account);
+            break;
+        }
+    }
+
+}
+
+void MainWindow::insertUser(QString acct, QString pwd, bool isChecked)
+{
+
+    // if (!dbManager->userExists(acct)) {
+    //     QMessageBox::warning(this, "登录失败", "账号不存在");
+    //     return;
+    // }
+
+    // 登录成功
+
+    User newUser;
+    newUser.account       = acct;
+    newUser.password      = pwd;
+    // newUser.nickname      = ui->editRegNickname->text();
+    qint64 id = dbManager->insertUser(newUser);
+
+    // 1）根据复选框更新记住密码标志
+    bool wantRemember = isChecked;
+    if (!dbManager->updateSavePassword(acct, wantRemember)) {
+        qWarning() << "更新记住密码失败：" << dbManager->lastError().text();
+    }
+    this->account = acct;
+    qDebug() << "account name:" << account;
+    onLoginSuccess();
+}
+
+void MainWindow::insertHnnkData(const QString &account, const QDateTime &startTime, const QDateTime &endTime,
+                                qreal averageAttention, qreal minAttention, qreal maxAttention, qreal medianAttention)
+{
+    HNNKData data;
+    data.mid = 1;
+    data.account = account;
+    data.startTime = startTime;
+    data.endTime = endTime;
+    data.medValue = medianAttention;
+    data.minValue = minAttention;
+    data.maxValue = maxAttention;
+    data.avgValue = averageAttention;
+    data.event = "Start detect Attention value.";
+
+    qint64 id = dbManager->insertHnnkData(data);
+    if (id < 0) {
+        QMessageBox::critical(this, "添加失败", dbManager->lastError().text());
+    } else {
+        QMessageBox::information(this, "添加成功", QString("您的数据ID：%1").arg(id));
+        // 可自动跳转到登录页，并填写账号
+    }
+}
+
+
+void MainWindow::onHnnkData() {
+    QList<HNNKData> data = dbManager->getHnnkDataByAccount(account);
+    emit emitHnnkData(data);
+}
+
+void MainWindow::onLogin(const QString accountName, const QString pwd,
+                         const QString chaptcha, const QString imagId)
+{
+    qDebug() << "----------------------------------------------";
+    QString m_token = m_multiControl->login(accountName, pwd, chaptcha, imagId);
+    qDebug() << "----------------------------------------------";
+    emit emitLoginResult(m_token);
+}
+
+
+void MainWindow::onRegister(const QString accountName, const QString pwd,
+                         const QString chaptcha, const QString imagId)
+{
+    qDebug() << "----------------------------------------------";
+    QString msgErr = m_multiControl->registAccounter(accountName, pwd, chaptcha, imagId);
+    qDebug() << "----------------------------------------------";
+    emit emitLoginResult(msgErr);
+}
+
+void MainWindow::onGraphCode()
+{
+    QPixmap pixMap;
+    QString m_imgId;
+    qDebug() << "----------------------------------------------";
+    m_multiControl->getGraphValidateCode(pixMap, m_imgId);
+    qDebug() << "----------------------------------------------";
+    emit emitGraphCode(pixMap, m_imgId);
+}
+/**
+ * 查找设备
+ * @brief MainWindow::onSearchDeviceList
+ */
+void MainWindow::onSearchDeviceList()
+{
+    m_multiControl->searchDeviceList();
+}
+
+void MainWindow::onSearchOver()
+{
+    m_pchooseWindow->searchOver();
+}
+
+void MainWindow::onLaunchCali(int blinkInterval)
+{
+    QString errMsg = m_multiControl->launchCalibration(blinkInterval, false);
+
+    on_statusBar(errMsg);
+}
+
+void MainWindow::onStartBlinkDetection(int choice)
+{
+    QString errMsg;
+    // 获取最近生成的用户模型名
+    m_modelName = getLastModelFile();
+
+    // 记录开始时间
+    startTime = QDateTime::currentDateTime();
+    m_detectionTimer.start();
+
+    // 调用SDK启动算法检测
+    if (choice == 1) // 使用用户模型算法
+        errMsg = m_multiControl->launchBlinkDetection(1, m_modelName);
+    else if (choice == 2) // 使用大数据模型算法
+        errMsg = m_multiControl->launchBlinkDetection(2);
+    else
+        errMsg = "未指定算法类别";
+
+    on_statusBar(errMsg);
+
+    m_isDetecting = true;
+    attentionValues.clear();
+
+}
+
+void MainWindow::onShowAttention()
+{
+    attentionShow->show();
+}
+
+void MainWindow::on_btnConnectDevice_clicked()
+{
+    m_pchooseWindow->showTopwindow();
+}
+
+void MainWindow::onMsg(int type, QString msg)
+{
+    if(1 == type){
+        m_pchooseWindow->setBluetoothEnable(false);
+    }
+    QMessageBox box;
+    box.setText(msg);
+    box.setDefaultButton(QMessageBox::Cancel);
+    QTimer::singleShot(3000, &box, SLOT(accept()));
+    box.exec();
+    //m_pchooseWindow->setFlashText("刷新");
+}
+
+void MainWindow::onGyroData(double x, double y)
+{
+    globalPosx = x;
+    globalPosy = y;
+    main_vmouse->move(x,y);
+}
+
+void MainWindow::onBlinkDetectionResult(int val)
+{
+    if(val > 0){
+        qDebug()<<"onBlinkCheckResult "<<val;
+        //m_colorSwithing.doColorSwitching(ui->label_blink);
+        if(1 == val)
+        {
+            qDebug() << "单眨眼";
+        }
+        //ui->blinktimes->setText(u8"单眨眼");
+        else
+        {
+            qDebug() << "双眨眼";
+        }
+        //ui->blinktimes->setText(u8"双眨眼");
+    }
+}
+
+void MainWindow::onBlinkCheckResult(int val)
+{
+    if(val > 0){
+        //main_vmouse->setStyleSheet("background-color:yellow");
+        main_vmouse->setBgColor(Qt::yellow);
+        QTimer::singleShot(500, this, [=](){
+            //main_vmouse->setStyleSheet("background-color:red");
+            main_vmouse->setBgColor(Qt::red);
+            main_vmouse->simulateMouseClick(globalPosx, globalPosy);
+            if(val != 1)        //眨两次眼
+            {
+                main_vmouse->simulateMouseClick(globalPosx, globalPosy);     //触发鼠标左键按下事件
+            }
+        });
+    }
+}
+
+void MainWindow::onUpdateBattaryStatus()
+{
+    int battary = m_multiControl->m_dataSystem->getParameter().m_battaryStatus;
+    qDebug() << "battary" << battary;
+    ui->barBattary->setValue(battary);
+}

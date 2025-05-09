@@ -2,27 +2,18 @@
 #include "qvalueaxis.h"
 #include "ui_attention.h"
 
-#include <QSqlQuery>
-#include <QSqlError>
 #include <QDateTime>
 #include <QRandomGenerator>
 #include <QChartView>
 #include <QBarSet>
 #include <QBarSeries>
 #include <QBarCategoryAxis>
-#include <QSqlRecord>
-
-// using namespace QtCharts;
 
 Attention::Attention(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::Attention)
 {
     ui->setupUi(this);
-    //创建数据库
-    setupDatabase();
-    // 生成随机值
-    // generateRandomData();
 
     //获取数据库数据
     loadDataFromDatabase();
@@ -30,11 +21,10 @@ Attention::Attention(QWidget *parent)
     //初始化
     iniBarChart();
 
-    drawBarChartForWeek(QDate::currentDate(),true);
-
     connect(ui->calendarWidget, &QCalendarWidget::selectionChanged, this, &Attention::on_calendarWidget_selectionChanged);
 
     // // 表格高度随内容自动扩展
+
     // ui->tableView->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     // 表格宽度随内容自动扩展
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -44,79 +34,6 @@ Attention::Attention(QWidget *parent)
 Attention::~Attention()
 {
     delete ui;
-}
-
-void Attention::setupDatabase()
-{
-    QSqlQuery query;
-    // Create users table
-    QString createUsersTable = R"(
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account TEXT,
-            password TEXT
-        )
-    )";
-
-    if (!query.exec(createUsersTable)) {
-        qDebug() << "Error: failed to create users table -" << query.lastError();
-    }
-
-    // Create attention_records table
-    QString createAttentionTable = R"(
-        CREATE TABLE IF NOT EXISTS attention_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account TEXT,
-            start_time TEXT,
-            end_time TEXT,
-            average_attention REAL,
-            min_attention REAL,
-            max_attention REAL,
-            median_attention REAL
-        )
-    )";
-
-    if (!query.exec(createAttentionTable)) {
-        qDebug() << "Error: failed to create attention_records table -" << query.lastError();
-    }
-}
-
-void Attention::generateRandomData()
-{
-    QSqlQuery query;
-    query.exec("DELETE FROM attention_records"); // Clear old data
-
-    for (int i = 0; i < 10; ++i) { // Simulate 10 records
-        QString account = QString::asprintf("user%02d", i + 1);
-        QDateTime startTime = QDateTime::currentDateTime().addDays(-QRandomGenerator::global()->bounded(0, 7));
-        QDateTime endTime = startTime.addSecs(QRandomGenerator::global()->bounded(3600, 7200)); // 1-2 hours later
-
-        QVector<qreal> attentionValues;
-        for (int j = 0; j < 10; ++j) { // Simulate 10 attention values per session
-            attentionValues.append(QRandomGenerator::global()->bounded(0, 100));
-        }
-
-        std::sort(attentionValues.begin(), attentionValues.end());
-
-        qreal averageAttention = std::accumulate(attentionValues.begin(), attentionValues.end(), 0.0) / attentionValues.size();
-        qreal minAttention = attentionValues.first();
-        qreal maxAttention = attentionValues.last();
-        qreal medianAttention = attentionValues[attentionValues.size() / 2];
-
-        query.prepare("INSERT INTO attention_records (account, start_time, end_time, average_attention, min_attention, max_attention, median_attention) "
-                      "VALUES (?, ?, ?, ?, ?, ?, ?)");
-        query.addBindValue(account);
-        query.addBindValue(startTime.toString(Qt::ISODate));
-        query.addBindValue(endTime.toString(Qt::ISODate));
-        query.addBindValue(averageAttention);
-        query.addBindValue(minAttention);
-        query.addBindValue(maxAttention);
-        query.addBindValue(medianAttention);
-
-        if (!query.exec()) {
-            qDebug() << "Error: failed to insert random data -" << query.lastError();
-        }
-    }
 }
 
 void Attention::countData()
@@ -129,19 +46,6 @@ void Attention::countData()
         int cnt70=0;
         int cnt80=0;
         int cnt90=0;
-        // qDebug() << dataModel->item(1,1)->text();
-        // qDebug() << dataModel->item(1,2)->text();
-        // qDebug() << dataModel->item(1,3)->text();
-        // qDebug() << dataModel->item(1,4)->text();
-        // qDebug() << dataModel->item(1,5)->text();
-        // qDebug() << dataModel->item(1,0)->text();
-
-        // qDebug() << dataModel->item(0,1)->text();
-        // qDebug() << dataModel->item(0,2)->text();
-        // qDebug() << dataModel->item(0,3)->text();
-        // qDebug() << dataModel->item(0,4)->text();
-        // qDebug() << dataModel->item(0,5)->text();
-        // qDebug() << dataModel->item(0,0)->text();
         for(int j=0;j<dataModel->rowCount();j++)
         {
             int val=dataModel->item(j,i)->text().toDouble();
@@ -186,46 +90,65 @@ void Attention::iniBarChart()
     chart->setAnimationOptions(QChart::SeriesAnimations);
     ui->chartView->setChart(chart);
     ui->chartView->setRenderHint(QPainter::Antialiasing);
+
 }
 
+void Attention::onHnnkData(QList<HNNKData> data)
+{
+    this->dataList = data;
+
+    //用来加载文字数据
+    loadDataFromDatabase();
+    //用来加载图数据
+    drawBarChartForWeek(QDate::currentDate(),true);
+}
+
+/**
+ * 加载数据库数据
+ * @brief Attention::loadDataFromDatabase
+ */
 void Attention::loadDataFromDatabase()
 {
+
     // 创建新的 QStandardItemModel，用于存储所有列
     dataModel = new QStandardItemModel(this);
-    dataModel->setColumnCount(7); // attention_records 有 7 列
-    dataModel->setHorizontalHeaderLabels({"Account", "Start Time", "End Time", "Average Attention", "Min Attention", "Max Attention", "Median Attention"}); // 更新列标题
+    dataModel->setColumnCount(7);
+    dataModel->setHorizontalHeaderLabels({
+        "Account", "Start Time", "End Time",
+        "Average Attention", "Min Attention", "Max Attention", "Median Attention"
+    });
 
-    // 查询全部列
-    QSqlQuery query("SELECT account, start_time, end_time, average_attention, min_attention, max_attention, median_attention FROM attention_records");
-
-    while (query.next()) {
+    for (const HNNKData &data : dataList) {
         QList<QStandardItem*> items;
-        // 读取所有列的数据
-        for (int i = 0; i < 7; ++i) { // 这里是 7，因为我们有 7 列
-            QStandardItem *item = new QStandardItem(query.value(i).toString());
-            item->setTextAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-            items.append(item);
-        }
-        dataModel->appendRow(items); // 添加一行数据
+        items << new QStandardItem(data.account);
+        items << new QStandardItem(data.startTime.toString("yyyy-MM-dd HH:mm:ss"));
+        items << new QStandardItem(data.endTime.toString("yyyy-MM-dd HH:mm:ss"));
+        items << new QStandardItem(QString::number(data.avgValue));   // 平均值
+        items << new QStandardItem(QString::number(data.minValue));
+        items << new QStandardItem(QString::number(data.maxValue));
+        items << new QStandardItem(QString::number(data.medValue));   // 中值
+
+        for (QStandardItem *item : items)
+            item->setTextAlignment(Qt::AlignCenter);
+        qDebug() <<"items:" <<items;
+        dataModel->appendRow(items);
     }
 
-    ui->tableView->setModel(dataModel); // 设置模型
+    ui->tableView->setModel(dataModel);
+
+
     countData(); // 统计数据
 }
+
 
 void Attention::drawBarChartForWeek(const QDate &date, bool isVertical)
 {
     QChart *chart = ui->chartView->chart();
-
-    if (isVertical)
-        chart->setTitle("Barchart 演示");
-    else
-        chart->setTitle("Horizontal BarChart 演示");
-
-    chart->removeAllSeries(); // 移除所有序列
+    chart->removeAllSeries();
     removeAllAxis(chart);
 
-    // 创建一个QLineSeries序列用于显示平均值
+    chart->setTitle(isVertical ? "Barchart 演示" : "Horizontal BarChart 演示");
+
     QLineSeries *seriesLine = new QLineSeries();
     seriesLine->setName("平均值");
     QPen pen(Qt::red);
@@ -235,58 +158,48 @@ void Attention::drawBarChartForWeek(const QDate &date, bool isVertical)
     font.setPointSize(12);
     font.setBold(true);
     seriesLine->setPointLabelsFont(font);
-    seriesLine->setPointLabelsVisible(true); // 显示数据点的数值
-    if (isVertical)
-        seriesLine->setPointLabelsFormat("@yPoint");
-    else
-        seriesLine->setPointLabelsFormat("@xPoint");
+    seriesLine->setPointLabelsVisible(true);
+    seriesLine->setPointLabelsFormat(isVertical ? "@yPoint" : "@xPoint");
 
-    // 使用QMap来记录每一天的数据
+    // 初始化映射表
     QMap<QDate, QVector<qreal>> attentionDataMap;
     QMap<QDate, qreal> averageSumMap;
-    QMap<QDate, int> countMap; // 用于记录每天的记录数
+    QMap<QDate, int> countMap;
 
-    // 查询数据库并填充数据
-    QSqlQuery query("SELECT start_time, average_attention, min_attention, max_attention, median_attention FROM attention_records");
-    while (query.next()) {
-        QDateTime startTime = QDateTime::fromString(query.value(0).toString(), Qt::ISODate);
-        QDate recordDate = startTime.date();
-        if (recordDate.weekNumber() == date.weekNumber()) {
-            attentionDataMap[recordDate].append(query.value(1).toDouble()); // 添加平均值
-            attentionDataMap[recordDate].append(query.value(2).toDouble()); // 添加最小值
-            attentionDataMap[recordDate].append(query.value(3).toDouble()); // 添加最大值
-            attentionDataMap[recordDate].append(query.value(4).toDouble()); // 添加中值
 
-            // 计算每天的累加平均值和记录数
-            averageSumMap[recordDate] += query.value(1).toDouble();
-            countMap[recordDate] += 1; // 增加当天的记录数
+    // 处理数据，筛选指定周的数据
+    int targetWeek = date.weekNumber();
+    for (const HNNKData &data : dataList) {
+        QDate recordDate = data.startTime.date();
+        if (recordDate.weekNumber() == targetWeek) {
+            attentionDataMap[recordDate] = {data.medValue, data.minValue, data.maxValue};
+            averageSumMap[recordDate] += data.avgValue;
+            countMap[recordDate] += 1;
         }
     }
 
     QBarSeries *seriesBar = new QBarSeries();
-    seriesBar->setLabelsVisible(true); // 显示棒柱的标签
-    seriesBar->setLabelsFormat("@value"); // 棒柱标签格式
+    seriesBar->setLabelsVisible(true);
+    seriesBar->setLabelsFormat("@value");
 
     QBarSet *minSet = new QBarSet("最小值");
     QBarSet *maxSet = new QBarSet("最大值");
     QBarSet *medianSet = new QBarSet("中值");
 
     QStringList categories;
+    int index = 0;
 
-    for (auto it = attentionDataMap.constBegin(); it != attentionDataMap.constEnd(); ++it) {
-        categories << it.key().toString("yyyy-MM-dd");
+    for (auto it = attentionDataMap.constBegin(); it != attentionDataMap.constEnd(); ++it, ++index) {
+        QDate dateKey = it.key();
+        categories << dateKey.toString("yyyy-MM-dd");
         QVector<qreal> values = it.value();
-        qreal minValue = values[1]; // 最小值
-        qreal maxValue = values[2]; // 最大值
-        qreal medianValue = values[3]; // 中值
 
-        *minSet << minValue;
-        *maxSet << maxValue;
-        *medianSet << medianValue;
+        *minSet << values[1]; // 最小值
+        *maxSet << values[2]; // 最大值
+        *medianSet << values[0]; // 中值（我们用 medValue 存储的）
 
-        // 计算每日的平均值
-        qreal dailyAverage = averageSumMap[it.key()] / countMap[it.key()]; // 使用当天的记录数
-        seriesLine->append(categories.size() - 1, dailyAverage);
+        qreal dailyAvg = averageSumMap[dateKey] / countMap[dateKey];
+        seriesLine->append(index, dailyAvg);
     }
 
     seriesBar->append(minSet);
@@ -296,17 +209,17 @@ void Attention::drawBarChartForWeek(const QDate &date, bool isVertical)
     connect(seriesBar, &QBarSeries::hovered, this, &Attention::do_barHovered);
     connect(seriesBar, &QBarSeries::clicked, this, &Attention::do_barClicked);
 
-    chart->addSeries(seriesBar); // 添加柱状图序列
-    chart->addSeries(seriesLine); // 添加折线图序列
+    chart->addSeries(seriesBar);
+    chart->addSeries(seriesLine);
 
-    QBarCategoryAxis *axisStud = new QBarCategoryAxis(); // 用于柱状图的坐标轴
-    axisStud->append(categories); // 添加横坐标文字列表
+    QBarCategoryAxis *axisStud = new QBarCategoryAxis();
+    axisStud->append(categories);
 
     QValueAxis *axisValue = new QValueAxis();
-    axisValue->setRange(0, 100); // 根据数据调整范围
+    axisValue->setRange(0, 100);
     axisValue->setTitleText("分数");
     axisValue->setTickCount(6);
-    axisValue->setLabelFormat("%.0f"); // 标签格式
+    axisValue->setLabelFormat("%.0f");
     axisValue->applyNiceNumbers();
 
     if (isVertical) {
@@ -322,8 +235,9 @@ void Attention::drawBarChartForWeek(const QDate &date, bool isVertical)
     seriesLine->attachAxis(axisStud);
     seriesLine->attachAxis(axisValue);
 
-    chart->legend()->setAlignment(Qt::AlignBottom); // 图例显示在下方
+    chart->legend()->setAlignment(Qt::AlignBottom);
 }
+
 
 void Attention::removeAllAxis(QChart *chart)
 {//删除一个chart的所有坐标轴
@@ -346,7 +260,6 @@ void Attention::on_calendarWidget_selectionChanged()
 
 void Attention::on_toolBtn_GenData_clicked()
 {
-    generateRandomData();
     loadDataFromDatabase();
     drawBarChartForWeek(QDate::currentDate());
 }
@@ -379,33 +292,8 @@ void Attention::do_barClicked(int index, QBarSet *barset)
     // ui->statusbar->showMessage(str);
 }
 
-void Attention::insertUser(const QString &account, const QString &password)
+void Attention::on_pushButton_clicked()
 {
-    QSqlQuery query;
-    query.prepare("INSERT INTO users (account, password) VALUES (?, ?)");
-    query.addBindValue(account);
-    query.addBindValue(password);
-
-    if (!query.exec()) {
-        qDebug() << "Error: failed to insert user -" << query.lastError();
-    }
+    emit emitUpdateHnnkData();
 }
 
-void Attention::insertAttentionRecord(const QString &account, const QDateTime &startTime, const QDateTime &endTime,
-                                      qreal averageAttention, qreal minAttention, qreal maxAttention, qreal medianAttention)
-{
-    QSqlQuery query;
-    query.prepare("INSERT INTO attention_records (account, start_time, end_time, average_attention, min_attention, max_attention, median_attention) "
-                  "VALUES (?, ?, ?, ?, ?, ?, ?)");
-    query.addBindValue(account);
-    query.addBindValue(startTime.toString(Qt::ISODate));
-    query.addBindValue(endTime.toString(Qt::ISODate));
-    query.addBindValue(averageAttention);
-    query.addBindValue(minAttention);
-    query.addBindValue(maxAttention);
-    query.addBindValue(medianAttention);
-
-    if (!query.exec()) {
-        qDebug() << "Error: failed to insert attention record -" << query.lastError();
-    }
-}

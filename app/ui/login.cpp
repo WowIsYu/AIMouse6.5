@@ -1,8 +1,6 @@
 #include "login.h"
-#include "qcryptographichash.h"
+// #include "qcryptographichash.h"
 #include "qpainter.h"
-#include "qsqlerror.h"
-#include "qsqlquery.h"
 #include "qstyleoption.h"
 #include "qtimer.h"
 #include "ui_login.h"
@@ -12,17 +10,12 @@
 #include <QTextStream>
 #include <QFileDialog>
 #include <QFile>
-using namespace hnnk;
-Login::Login(hnnk::HMultiControlSDK *multiObj, QWidget *parent):
+Login::Login(QWidget *parent):
     QWidget(parent),
-    ui(new Ui::Login), m_multiControl(multiObj)
+    ui(new Ui::Login)
 {
     ui->setupUi(this);
     initUI();
-
-    initDatabase();
-
-    detectToken(); // 调用检测令牌
 }
 
 
@@ -87,29 +80,47 @@ void Login::initUI()
     this->setWindowFlags(Qt::FramelessWindowHint); // 隐藏最大最小化等按键
 }
 
-void Login::initDatabase()
-{
-    QSqlQuery query;
-    // Create users table
-    QString createUsersTable = R"(
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account TEXT,
-            password TEXT
-        )
-    )";
-
-    if (!query.exec(createUsersTable)) {
-        qDebug() << "Error: failed to create users table -" << query.lastError();
-    }
-}
-
 void Login::showError(const QString &message)
 {
     ui->label_result->setText("<font color='red'>" + message + "</font>");
     QTimer::singleShot(3000, this, [this]() {
         ui->label_result->clear();
     });
+}
+
+void Login::onLoadRemembered(QString account, QString password)
+{
+    // 设置解码后的数据到界面上
+    ui->lineEdit_account->setText(account);
+    ui->lineEdit_pwd->setText(password);
+    ui->checkBox_token->setChecked(true);
+}
+
+void Login::onLoginResult(QString m_token)
+{
+    if(m_token.isEmpty()){
+        ui->label_result->setText("登录失败");
+    }else{
+        ui->label_result->setText("登录成功, 正在加载界面");
+        insertUser();
+    }
+}
+
+void Login::onRegisterResult(QString msgErr)
+{
+    if(!msgErr.compare("")){
+        ui->label_result->setText("注册成功");
+    }else{
+        ui->label_result->setText(QString("注册失败: %1").arg(msgErr));
+    }
+}
+
+void Login::onGraphCode(QPixmap pixMap, QString imgId)
+{
+    qDebug() <<"hahahaha" << pixMap << "666" << imgId;
+    pixMap = pixMap.scaled(ui->label_graph->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    ui->label_graph->setPixmap(pixMap);
+    this->m_imgId = imgId;
 }
 
 
@@ -172,37 +183,9 @@ void Login::on_pushButton_clicked()
     }
 
     if(ui->radioButton_login->isChecked()){
-        //登录
-        qDebug()<<" m_imgId "<<m_imgId<<" account "<<ui->lineEdit_account->text()
-                 <<" pwd "<<ui->lineEdit_pwd->text()<<" code "<<ui->lineEdit_code->text();
-
-        //调用SDK进行用户登录
-        QString m_token;
-        m_token = m_multiControl->login(account, password, captcha, captchaId);
-        if(m_token.isEmpty()){
-            ui->label_result->setText("登录失败");
-
-        }else{
-            ui->label_result->setText("登录成功, 正在加载界面");
-            emit notifyLoginResult();
-            if (ui->checkBox_token->isChecked()) {
-                createToken();
-                qDebug() << "create token";
-            }
-        }
-
+        emit emitLogin(account, password, captcha, captchaId);
     }else{
-        //注册
-        //main_vmouse->setStyleSheet("background-color:yellow");
-        qDebug() << "登录页面：注册";
-        //调用SDK进行用户注册
-        QString msgErr;
-        msgErr = m_multiControl->registAccounter(account, password, captcha, captchaId);
-        if(!msgErr.compare("")){
-            ui->label_result->setText("注册成功");
-        }else{
-            ui->label_result->setText(QString("注册失败: %1").arg(msgErr));
-        }
+        emit emitRegister(account, password, captcha, captchaId);
     }
 }
 
@@ -214,23 +197,17 @@ void Login::on_pushButton_2_clicked()
 
 bool Login::eventFilter(QObject *obj, QEvent *event)
 {
-    bool isOk = false;
     if(qobject_cast<QLabel*>(obj) == ui->label_graph &&
         event->type() == QEvent::MouseButtonPress)
     {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         if(mouseEvent->button() == Qt::LeftButton)
         {
-            //调用SDK获取图形验证码
-            QPixmap pixMap;
-            m_multiControl->getGraphValidateCode(pixMap, m_imgId);
-            pixMap = pixMap.scaled(ui->label_graph->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            ui->label_graph->setPixmap(pixMap);
-            isOk = true;
+            emit emitGraphCode();
         }
 
     }
-    return isOk;
+    return QWidget::eventFilter(obj, event);
 }
 
 void Login::on_checkBox_token_clicked(bool checked)
@@ -243,61 +220,28 @@ void Login::on_checkBox_token_clicked(bool checked)
     }
 }
 
-void Login::createToken() {
+// 插入用户
+void Login::insertUser() {
     QString account = ui->lineEdit_account->text();
     QString password = ui->lineEdit_pwd->text();
 
     // 将account和password转换为QByteArray并进行Base64编码
-    QByteArray accountBase64 = account.toUtf8().toBase64();
-    QByteArray passwordBase64 = password.toUtf8().toBase64();
+    // QByteArray accountBase64 = account.toUtf8().toBase64();
+    // QByteArray passwordBase64 = password.toUtf8().toBase64();
 
-    QSqlQuery query;
-    query.prepare("INSERT OR REPLACE INTO users (account, password) VALUES (?, ?)");
-    query.addBindValue(QString(accountBase64)); // 插入Base64编码的账户
-    query.addBindValue(QString(passwordBase64)); // 插入Base64编码的密码
+    // QSqlQuery query;
+    // query.prepare("INSERT OR REPLACE INTO users (account, password) VALUES (?, ?)");
+    // query.addBindValue(QString(accountBase64)); // 插入Base64编码的账户
+    // query.addBindValue(QString(passwordBase64)); // 插入Base64编码的密码
 
-    if (!query.exec()) {
-        qDebug() << "Error: failed to insert/update user data -" << query.lastError();
-    }
+    // if (!query.exec()) {
+    //     qDebug() << "Error: failed to insert/update user data -" << query.lastError();
+    // }
+    emit onInsertUser(account, password, ui->checkBox_token->isChecked());
 }
-
-
-
-
-void Login::detectToken() {
-
-    QSqlQuery query;
-    query.prepare("SELECT account, password FROM users LIMIT 1"); // 查询第一个用户
-    if (query.exec()) {
-        if (query.next()) {
-            ui->checkBox_token->setChecked(true);
-            ui->lineEdit_account->clear();
-            ui->lineEdit_pwd->clear();
-
-            QString account = query.value(0).toString();
-            QString password = query.value(1).toString();
-
-            // 将Base64编码的字符串解码回原始数据
-            QByteArray accountBase64 = QByteArray::fromBase64(account.toUtf8());
-            QByteArray passwordBase64 = QByteArray::fromBase64(password.toUtf8());
-
-            // 设置解码后的数据到界面上
-            ui->lineEdit_account->setText(QString::fromUtf8(accountBase64));
-            ui->lineEdit_pwd->setText(QString::fromUtf8(passwordBase64));
-        } else {
-            qDebug() << "No user data found."; // 表中没有数据
-        }
-    } else {
-        qDebug() << "Error: failed to retrieve user data -" << query.lastError();
-    }
-
-}
-
-
 
 
 void Login::on_btn_close_clicked()
 {
     emit onLoginClose();
 }
-

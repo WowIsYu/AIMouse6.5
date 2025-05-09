@@ -5,7 +5,6 @@
 #include <QMap>
 #include <QVariant>
 #include <QString>
-#include "HMultiControlSDK.h"
 #include <QMouseEvent>
 
 
@@ -19,12 +18,10 @@ class Login : public QWidget
     Q_OBJECT
 
 public:
-    explicit Login(hnnk::HMultiControlSDK *multiObj, QWidget *parent = nullptr);
+    explicit Login(QWidget *parent = nullptr);
     ~Login();
     bool eventFilter(QObject *obj, QEvent *event);
-    void createToken();
-    void detectToken();
-
+    void insertUser();
 
     virtual void paintEvent(QPaintEvent *event) override; //重绘,
     //需添加头文件 <QMouseEvent>
@@ -35,13 +32,23 @@ public:
     void setStatusBar(QString information);
 
     void initUI();
-    void initDatabase();
 
     void showError(const QString &message);
-
 signals:
     void notifyLoginResult();
     void onLoginClose();
+    void onInsertUser(QString acct, QString pwd, bool isChecked);
+    void emitLogin(const QString accountName, const QString pwd,
+                   const QString graphCode, const QString imagId);
+    void emitRegister(const QString accountName, const QString pwd,
+                      const QString graphCode, const QString imagId);
+    void emitGraphCode();
+public slots:
+    void onLoadRemembered(QString account, QString password);
+    void onLoginResult(QString m_token);
+    void onRegisterResult(QString m_err);
+    void onGraphCode(QPixmap pixMap, QString m_imgId);
+
 
 private slots:
     void on_radioButton_regist_clicked();
@@ -61,9 +68,6 @@ private slots:
 private:
     Ui::Login *ui;
     QString m_imgId;
-    //std::shared_ptr<hnnk::HBlinkDetection> m_blink;
-    hnnk::HMultiControlSDK *m_multiControl = nullptr;
-
     bool m_leftMousePressed;
     QPoint m_StartPoint;
 };

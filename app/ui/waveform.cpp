@@ -18,9 +18,8 @@ using namespace hnnk;
 //#pragma execution_character_set("utf-8")        //设置编码格式，防止中文乱码
 
 
-Waveform::Waveform(QWidget *parent,hnnk::HDataSystem_interface *m_dataSystemSDK, ChooseDevice *m_pchooseWindow)
+Waveform::Waveform(QWidget *parent,hnnk::HDataSystem_interface *m_dataSystemSDK)
     : QWidget(parent)
-    , m_pchooseWindow(m_pchooseWindow)
     , m_dataSystemSDK(m_dataSystemSDK)
     , ui(new Ui::Waveform)
 {
@@ -37,13 +36,6 @@ Waveform::Waveform(QWidget *parent,hnnk::HDataSystem_interface *m_dataSystemSDK,
     //通知读取陀螺仪，通道状态， 电量三种数据（QVector<hnnk::GYRODATA> gyroDatas, QVector<unsigned char> channoff, double battery）
     connect(m_dataSystemSDK, &hnnk::HDataSystem_interface::emitAddtionData
             , this, &Waveform::onAddtionData);
-
-    //通知搜索到的所有设备名称（QString devices）设备名称列表
-    connect(m_dataSystemSDK, &hnnk::HDataSystem_interface::emitDeviceName
-            , this, &Waveform::onDeviceNameUpdate);
-    //通知已经搜索完毕
-    connect(m_dataSystemSDK, &hnnk::HDataSystem_interface::emitSearchNetDeviceOver
-            , this, &Waveform::onSearchOver);
     //通知连接状态发生改变
     connect(m_dataSystemSDK, &hnnk::HDataSystem_interface::emitConnectChange
             , this, &Waveform::onConnectUpdate);
@@ -54,10 +46,6 @@ Waveform::Waveform(QWidget *parent,hnnk::HDataSystem_interface *m_dataSystemSDK,
     //通知读取本地edf数据（脑电信号， 基本参数， 第几通道）
     connect(m_dataSystemSDK, &hnnk::HDataSystem_interface::emitEdfData
             , this, &Waveform::onReadEdfDataToDouble);
-    //异常消息弹出框（int type, QString msg）操作类型， 消息内容
-    connect(m_dataSystemSDK, &hnnk::HDataSystem_interface::emitMsgBox
-            , this, &Waveform::onMsg);
-
     //构建协议选择窗口
     // m_iniEnv = new InitDataSystemProtocol;
     // m_iniEnv->setModal(true);
@@ -69,15 +57,15 @@ Waveform::Waveform(QWidget *parent,hnnk::HDataSystem_interface *m_dataSystemSDK,
     connect(m_pMarkingTester, &MarkingTester::emitManualMarking, this, &Waveform::onDealManualMarking);//接收手动打标信号
 
     //设备选择
-    connect(m_pchooseWindow, &ChooseDevice::refreshList
-            , m_dataSystemSDK, [=]{
-        //m_pchooseWindow->setBluetoothEnable(true);      //默认是可用的
-        //事件分发， （操作类型， 操作所需参数）搜索设备
-        m_dataSystemSDK->eventDispatcher(DataAppOperator::DAO_SEARCHDEVICE, QVariant(QVariant::Int));
-        qDebug() << "发送寻找设备请求";
-    });
-    connect(m_pchooseWindow, SIGNAL(checkSignal(hnnk::DataAppOperator, QString ))       //确认设备的发送信号
-            , this, SLOT(onChooseBlueEvent(hnnk::DataAppOperator, QString)));
+    // connect(m_pchooseWindow, &ChooseDevice::refreshList
+    //         , m_dataSystemSDK, [=]{
+    //     //m_pchooseWindow->setBluetoothEnable(true);      //默认是可用的
+    //     //事件分发， （操作类型， 操作所需参数）搜索设备
+    //     m_dataSystemSDK->eventDispatcher(DataAppOperator::DAO_SEARCHDEVICE, QVariant(QVariant::Int));
+    //     qDebug() << "发送寻找设备请求";
+    // });
+    // connect(m_pchooseWindow, SIGNAL(checkSignal(hnnk::DataAppOperator, QString ))       //确认设备的发送信号
+    //         , this, SLOT(onChooseBlueEvent(hnnk::DataAppOperator, QString)));
 
 
     ///参数配置
@@ -96,8 +84,8 @@ Waveform::~Waveform()
 {
     delete m_dataSystemSDK;
     m_dataSystemSDK = nullptr;
-    delete m_pchooseWindow;
-    m_pchooseWindow = nullptr;
+    // delete m_pchooseWindow;
+    // m_pchooseWindow = nullptr;
     delete m_pMarkingTester;
     m_pMarkingTester = nullptr;
     delete ui;
@@ -486,35 +474,17 @@ void Waveform::onConnectUpdate(CONNECTUPDATE con)
 
 void Waveform::onChooseBlueEvent(hnnk::DataAppOperator type, QString name)
 {
-    qDebug()<<" Waveform::onChooseBlueEvent "<<name;
-    QVariant vv(name);
+   //  qDebug()<<" Waveform::onChooseBlueEvent "<<name;
+   //  QVariant vv(name);
 
-   m_dataSystemSDK->eventDispatcher(type, vv);
-    if(type==DAO_CONNET){
-      m_dataSystemSDK->eventDispatcher(DataAppOperator::DAO_READEEGDATA, QVariant(QVariant::Int));
-      qDebug() << "WaveForm:m_dataSystemSDK 已连接设备：" << vv;
-    }
+   // m_dataSystemSDK->eventDispatcher(type, vv);
+   //  if(type==DAO_CONNET){
+   //    m_dataSystemSDK->eventDispatcher(DataAppOperator::DAO_READEEGDATA, QVariant(QVariant::Int));
+   //    qDebug() << "WaveForm:m_dataSystemSDK 已连接设备：" << vv;
+   //  }
 
 
     //dealConnectSuccess();
-}
-
-void Waveform::onDeviceNameUpdate(QString devices)
-{
-    //TODO设备选择窗体
-    // qDebug()<<" WaveWindow::deviceActive "<<devices<<" "<<m_localConf.m_deviceName;
-    // if(m_localConf.m_deviceName.isEmpty() && m_pchooseWindow->isHidden()){
-    //     //没有历史设备名，需要弹出选择窗口
-    //     m_pchooseWindow->showTopwindow();
-    //     qDebug()<<" m_pchooseWindow  showTopwindow ";
-    // }
-    qDebug() << "返回查找到的设备名称";
-    m_pchooseWindow->updateDeviceNameList(devices);
-}
-
-void Waveform::onSearchOver()
-{
-    m_pchooseWindow->searchOver();
 }
 
 void Waveform::clearScreen()
@@ -573,26 +543,6 @@ void Waveform::clearScreen()
     m_rangeRight = 8;
     m_timeCur = 0;
 }
-
-void Waveform::onMsg(int type, QString msg)
-{
-    if(1 == type){
-        m_pchooseWindow->setBluetoothEnable(false);
-    }
-    QMessageBox box;
-    box.setText(msg);
-    box.setDefaultButton(QMessageBox::Cancel);
-    QTimer::singleShot(3000, &box, SLOT(accept()));
-    box.exec();
-    //m_pchooseWindow->setFlashText("刷新");
-}
-
-
-void Waveform::toggleConnect() {
-}
-
-
-
 
 void Waveform::on_btn_trapFilter_clicked()
 {
@@ -692,13 +642,3 @@ void Waveform::on_btn_stop_acquisition_clicked()
     m_dataSystemSDK->eventDispatcher(DataAppOperator::DAO_ENDREADEEGDATA, QVariant(QVariant::Int));
     m_dataSystemSDK->eventDispatcher(DataAppOperator::DAO_ENDSAVE, QVariant(QVariant::Int));
 }
-
-/**
- * 连接设备
- * @brief Waveform::on_btn_bluetooth_clicked
- */
-void Waveform::on_btn_bluetooth_clicked()
-{
-    m_pchooseWindow->showTopwindow();
-}
-

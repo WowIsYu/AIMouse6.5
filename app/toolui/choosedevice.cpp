@@ -225,6 +225,13 @@ void ChooseDevice::setTableWidgetViwe(QStringList nameList)
     ui->verticalLayout_2->addWidget(m_deviceList);
 }
 
+void ChooseDevice::onUpdateDeviceNameList(QString devices)
+{
+    if(!m_names.contains(devices)){
+        m_names.push_back(devices);
+    }
+}
+
 
 void ChooseDevice::tabChanged(int tabIndex)
 {

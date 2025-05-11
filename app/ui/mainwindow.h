@@ -14,12 +14,12 @@
 #include "databasemanager.h"
 
 #include "Nagano.h"
-#include "attention.h"
-#include "waveform.h"
-#include "blinkcalibration.h"
-#include "game.h"
-#include "setup.h"
-#include "login.h"
+#include "datawidget.h"
+#include "waveformwidget.h"
+#include "blinkcaliwidget.h"
+#include "gamewidget.h"
+#include "setupwidget.h"
+#include "loginwidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -68,26 +68,29 @@ public slots:
     void onRegister(const QString accountName, const QString pwd,
                     const QString chaptcha, const QString imagId);
     void onGraphCode();
-    void onSearchDeviceList();
     void onSearchOver();
     void onLaunchCali(int blinkInterval);
     void onStartBlinkDetection(int choice);
     void onStopBlinkDetection();
     void onShowAttention();
 
+    /**
+     * @brief onReciveEegData 接收脑电数据
+     * @param eegVec  脑电数据
+     */
+    void onReciveEegData(QVector<hnnk::EegDataChan> eegVec);
+
 private:
     Ui::MainWindow *ui;
     QButtonGroup *btnGroup;                       // 管理侧边栏按钮
-    Waveform *waveFormUi;
-    BlinkCalibration *blinkCaliUi;
-    GreedySnakeGame *greedySnakeGameUi;
-    Attention *attention;
-    SetUp *setUpUi;
-    Login *m_login;                               // 登录界面
+    WaveFormWidget *waveFormWidget;
+    BlinkCaliWidget *blinkCaliWidget;
+    GameWidget *gameWidget;
+    DataWidget *dataWidget;
+    SetUpWidget *setUpWidget;
+    LoginWidget *loginWidget;                               // 登录界面
     bool m_leftMousePressed;
     QPoint m_StartPoint;
-
-    DatabaseManager *dbManager;                   // 初始化数据库
     QString account = "";
 
     QProcess *process = nullptr;
@@ -114,6 +117,7 @@ private:
     Nagano *attentionShow;                        // 注意力显示窗口
 
     QTimer *timer;
+    BasicParameter parameter;
 
 private slots:
     void on_statusBar(QString message);
@@ -124,7 +128,8 @@ private slots:
     void onGyroData(double x, double y);
     void onBlinkDetectionResult(int val);
     void onBlinkCheckResult(int);
-    void onUpdateBattaryStatus();
+
+    void on_btnSet_clicked();
 
 signals:
     void emitInitSetUp(hnnk::HMultiControlSDK *MultiObj);
@@ -133,6 +138,8 @@ signals:
     void emitLoginResult(QString);
     void emitRegisterResult(QString);
     void emitGraphCode(QPixmap pixMap, QString m_imgId);
+    void emitEegData(QVector<hnnk::EegDataChan> eogVec);
+    void emitParameter(hnnk::BasicParameter para);
 };
 
 #endif // MAINWINDOW_H

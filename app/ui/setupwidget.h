@@ -1,5 +1,5 @@
-#ifndef SETUP_H
-#define SETUP_H
+#ifndef SETUPWIDGET_H
+#define SETUPWIDGET_H
 
 #include <QWidget>
 #include <QDebug>
@@ -7,10 +7,10 @@
 #include <QDateTime>
 #include <QWebEngineView>
 namespace Ui {
-class SetUp;
+class SetUpWidget;
 }
 
-class SetUp : public QWidget
+class SetUpWidget : public QWidget
 {
     Q_OBJECT
 
@@ -35,15 +35,15 @@ signals:
     void emitShowAttention();
 
 public:
-    explicit SetUp(QWidget *parent = nullptr);
-    ~SetUp();
+    explicit SetUpWidget(QWidget *parent = nullptr);
+    ~SetUpWidget();
 
     void calculateAttentionStats();
 
 private:
-    Ui::SetUp *ui;                               // UI指针
+    Ui::SetUpWidget *ui;                               // UI指针
     QWebEngineView *m_webView;                   // 网页视图
 
 };
 
-#endif // SETUP_H
+#endif // SETUPWIDGET_H

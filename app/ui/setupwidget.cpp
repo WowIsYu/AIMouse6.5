@@ -1,13 +1,13 @@
-#include "setup.h"
-#include "ui_setup.h"
+#include "setupwidget.h"
+#include "ui_setupwidget.h"
 #include <QStackedWidget>
 #include <QFrame>
 #include <QTimer>
 
 
-SetUp::SetUp(QWidget *parent)
+SetUpWidget::SetUpWidget(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::SetUp)
+    , ui(new Ui::SetUpWidget)
 {
     ui->setupUi(this);
 
@@ -39,26 +39,26 @@ SetUp::SetUp(QWidget *parent)
 
 }
 
-SetUp::~SetUp()
+SetUpWidget::~SetUpWidget()
 {
     delete ui;
 }
 
-void SetUp::on_horizontalSlider_valueChanged(int value)
+void SetUpWidget::on_horizontalSlider_valueChanged(int value)
 {
     //坐标灵敏度，默认值为14
     ui->sensitivityLabel->setText(QString("灵敏度：%1").arg(value));
     emit emitSetSensitivity(value);
 }
 
-void SetUp::onAttenDetectionResult(double val)
+void SetUpWidget::onAttenDetectionResult(double val)
 {
     double val2=val*100;
     ui->resultLabel->setText(QString::number(val2,'f', 0));
 }
 
 
-void SetUp::on_beginButton_clicked()
+void SetUpWidget::on_beginButton_clicked()
 {
     int choice = 0;
     // 调用SDK启动算法检测
@@ -71,34 +71,34 @@ void SetUp::on_beginButton_clicked()
 
 }
 
-void SetUp::on_stopButton_clicked()
+void SetUpWidget::on_stopButton_clicked()
 {
     emit emitStopBlinkDetection();
 }
 
-void SetUp::on_pushButton_clicked()
+void SetUpWidget::on_pushButton_clicked()
 {
     emit emitShowAttention();
 }
-void SetUp::on_btnSet_clicked()
+void SetUpWidget::on_btnSet_clicked()
 {
     ui->stackedWidget->setCurrentIndex(0);
 }
 
 
-void SetUp::on_btnInfo_clicked()
+void SetUpWidget::on_btnInfo_clicked()
 {
     ui->stackedWidget->setCurrentIndex(1);
 }
 
 
-void SetUp::on_btnQuestion_clicked()
+void SetUpWidget::on_btnQuestion_clicked()
 {
     ui->stackedWidget->setCurrentIndex(2);
 }
 
 
-void SetUp::on_btnAbout_clicked()
+void SetUpWidget::on_btnAbout_clicked()
 {
     ui->stackedWidget->setCurrentIndex(3);
 }

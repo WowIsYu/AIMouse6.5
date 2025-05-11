@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Login</class>
- <widget class="QWidget" name="Login">
+ <class>LoginWidget</class>
+ <widget class="QWidget" name="LoginWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -29,7 +29,7 @@
     background-repeat表示图片是否重复显示
 */
 
-#Login {
+#LoginWidget {
 	background-color:#FFFFFF; /*背景颜色*/
     border-radius: 10px;             /*四角圆角的直径*/
     border-style:solid;             /*边框样式（实线）*/
@@ -130,6 +130,9 @@ border-radius:10px;
    </property>
    <item row="0" column="0">
     <widget class="QFrame" name="frame_background">
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
@@ -1235,7 +1238,7 @@ border-radius:10px;
   <connection>
    <sender>btn_min</sender>
    <signal>clicked()</signal>
-   <receiver>Login</receiver>
+   <receiver>LoginWidget</receiver>
    <slot>showMinimized()</slot>
    <hints>
     <hint type="sourcelabel">

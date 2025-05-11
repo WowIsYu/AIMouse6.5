@@ -1,30 +1,30 @@
-#include "login.h"
+#include "loginwidget.h"
 // #include "qcryptographichash.h"
 #include "qpainter.h"
 #include "qstyleoption.h"
 #include "qtimer.h"
-#include "ui_login.h"
+#include "ui_loginwidget.h"
 #include <QDebug>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QTextStream>
 #include <QFileDialog>
 #include <QFile>
-Login::Login(QWidget *parent):
+LoginWidget::LoginWidget(QWidget *parent):
     QWidget(parent),
-    ui(new Ui::Login)
+    ui(new Ui::LoginWidget)
 {
     ui->setupUi(this);
     initUI();
 }
 
 
-Login::~Login()
+LoginWidget::~LoginWidget()
 {
     delete ui;
 }
 
-void Login::paintEvent(QPaintEvent *event)
+void LoginWidget::paintEvent(QPaintEvent *event)
 {
     QStyleOption opt;
     opt.initFrom(this);
@@ -34,7 +34,7 @@ void Login::paintEvent(QPaintEvent *event)
 //需添加头文件 <QPainter>和 <QStyleOption>
 
 
-void Login::mousePressEvent(QMouseEvent *event)
+void LoginWidget::mousePressEvent(QMouseEvent *event)
 {
     // 只能是鼠标左键移动和改变大小
     if (event->button() == Qt::LeftButton) // 处于左键状态
@@ -54,17 +54,17 @@ void Login::mousePressEvent(QMouseEvent *event)
 }
 
 
-void Login::mouseReleaseEvent(QMouseEvent *event)
+void LoginWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     m_leftMousePressed = false;//释放鼠标，标志位置为假
 }
 
-void Login::setStatusBar(QString information)
+void LoginWidget::setStatusBar(QString information)
 {
     ui->label_result->setText(information);
 }
 
-void Login::initUI()
+void LoginWidget::initUI()
 {
     ui->label_graph->installEventFilter(this);
 
@@ -80,7 +80,7 @@ void Login::initUI()
     this->setWindowFlags(Qt::FramelessWindowHint); // 隐藏最大最小化等按键
 }
 
-void Login::showError(const QString &message)
+void LoginWidget::showError(const QString &message)
 {
     ui->label_result->setText("<font color='red'>" + message + "</font>");
     QTimer::singleShot(3000, this, [this]() {
@@ -88,7 +88,7 @@ void Login::showError(const QString &message)
     });
 }
 
-void Login::onLoadRemembered(QString account, QString password)
+void LoginWidget::onLoadRemembered(QString account, QString password)
 {
     // 设置解码后的数据到界面上
     ui->lineEdit_account->setText(account);
@@ -96,7 +96,7 @@ void Login::onLoadRemembered(QString account, QString password)
     ui->checkBox_token->setChecked(true);
 }
 
-void Login::onLoginResult(QString m_token)
+void LoginWidget::onLoginResult(QString m_token)
 {
     if(m_token.isEmpty()){
         ui->label_result->setText("登录失败");
@@ -106,7 +106,7 @@ void Login::onLoginResult(QString m_token)
     }
 }
 
-void Login::onRegisterResult(QString msgErr)
+void LoginWidget::onRegisterResult(QString msgErr)
 {
     if(!msgErr.compare("")){
         ui->label_result->setText("注册成功");
@@ -115,7 +115,7 @@ void Login::onRegisterResult(QString msgErr)
     }
 }
 
-void Login::onGraphCode(QPixmap pixMap, QString imgId)
+void LoginWidget::onGraphCode(QPixmap pixMap, QString imgId)
 {
     qDebug() <<"hahahaha" << pixMap << "666" << imgId;
     pixMap = pixMap.scaled(ui->label_graph->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -124,7 +124,7 @@ void Login::onGraphCode(QPixmap pixMap, QString imgId)
 }
 
 
-void Login::mouseMoveEvent(QMouseEvent *event)
+void LoginWidget::mouseMoveEvent(QMouseEvent *event)
 {
     //移动窗口,由于取消了标题栏，因此需要自己实现拖动窗口功能
     if (m_leftMousePressed)
@@ -139,7 +139,7 @@ void Login::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void Login::on_radioButton_regist_clicked()
+void LoginWidget::on_radioButton_regist_clicked()
 {
     if(!ui->lineEdit_pwd_verify->isVisible()){
         ui->frame_pwd_2->setVisible(true);
@@ -149,14 +149,14 @@ void Login::on_radioButton_regist_clicked()
 }
 
 
-void Login::on_radioButton_login_clicked()
+void LoginWidget::on_radioButton_login_clicked()
 {
     ui->lineEdit_pwd_verify->setVisible(false);
     ui->frame_pwd_2->setVisible(false);
     ui->label_pwd_verify->setVisible(false);
 }
 
-void Login::on_pushButton_clicked()
+void LoginWidget::on_pushButton_clicked()
 {
     QString account = ui->lineEdit_account->text();
     QString password = ui->lineEdit_pwd->text();
@@ -182,20 +182,21 @@ void Login::on_pushButton_clicked()
         return;
     }
 
-    if(ui->radioButton_login->isChecked()){
-        emit emitLogin(account, password, captcha, captchaId);
-    }else{
-        emit emitRegister(account, password, captcha, captchaId);
-    }
+    emit onInsertUser(account, password, ui->checkBox_token->isChecked());
+    // if(ui->radioButton_login->isChecked()){
+    //     emit emitLogin(account, password, captcha, captchaId);
+    // }else{
+    //     emit emitRegister(account, password, captcha, captchaId);
+    // }
 }
 
 
-void Login::on_pushButton_2_clicked()
+void LoginWidget::on_pushButton_2_clicked()
 {
     exit(0);
 }
 
-bool Login::eventFilter(QObject *obj, QEvent *event)
+bool LoginWidget::eventFilter(QObject *obj, QEvent *event)
 {
     if(qobject_cast<QLabel*>(obj) == ui->label_graph &&
         event->type() == QEvent::MouseButtonPress)
@@ -210,7 +211,7 @@ bool Login::eventFilter(QObject *obj, QEvent *event)
     return QWidget::eventFilter(obj, event);
 }
 
-void Login::on_checkBox_token_clicked(bool checked)
+void LoginWidget::on_checkBox_token_clicked(bool checked)
 {
     if (checked) {
         qDebug() << "Checkbox is now checked.";
@@ -221,7 +222,7 @@ void Login::on_checkBox_token_clicked(bool checked)
 }
 
 // 插入用户
-void Login::insertUser() {
+void LoginWidget::insertUser() {
     QString account = ui->lineEdit_account->text();
     QString password = ui->lineEdit_pwd->text();
 
@@ -241,7 +242,7 @@ void Login::insertUser() {
 }
 
 
-void Login::on_btn_close_clicked()
+void LoginWidget::on_btn_close_clicked()
 {
     emit onLoginClose();
 }

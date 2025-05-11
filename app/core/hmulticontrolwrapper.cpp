@@ -10,11 +10,8 @@ public:
 
 HMultiControlWrapper::HMultiControlWrapper(QObject *parent)
     : QObject(parent), m_impl(new Impl) {
-    m_impl->multiControl = new hnnk::HMultiControlSDK(this);
 
     initial();
-
-    this->m_dataSystem = m_impl->multiControl->m_dataSystem;
 
     connect(m_impl->multiControl, &HMultiControlSDK::notifyDeviceNameUpdate,
             this, &HMultiControlWrapper::notifyDeviceNameUpdate);
@@ -42,6 +39,26 @@ HMultiControlWrapper::HMultiControlWrapper(QObject *parent)
 
     connect(m_impl->multiControl, &HMultiControlSDK::notifyCaliTrigger,
             this, &HMultiControlWrapper::notifyCaliTrigger);
+
+
+    //通知读取脑电信号
+    connect(m_impl->multiControl->m_dataSystem, &HDataSystem_interface::emitEvent
+            , this, &HMultiControlWrapper::emitEvent);
+    //通知读取脑电通道及采样数据(int chs, int rate)设备总的通道数， 采样率
+    connect(m_impl->multiControl->m_dataSystem, &HDataSystem_interface::emitChsAndSampRate
+            , this, &HMultiControlWrapper::emitChsAndSampRate);
+    //通知读取陀螺仪，通道状态， 电量三种数据（QVector<hnnk::GYRODATA> gyroDatas, QVector<unsigned char> channoff, double battery）
+    connect(m_impl->multiControl->m_dataSystem, &HDataSystem_interface::emitAddtionData
+            , this, &HMultiControlWrapper::emitAddtionData);
+    //通知连接状态发生改变
+    connect(m_impl->multiControl->m_dataSystem, &HDataSystem_interface::emitConnectChange
+            , this, &HMultiControlWrapper::emitConnectChange);
+    //通知读取设备自检结果(hnnk::AmpTestInfo info)
+    connect(m_impl->multiControl->m_dataSystem, &HDataSystem_interface::emitUpdateAmpTestInfo
+            , this, &HMultiControlWrapper::emitUpdateAmpTestInfo);
+    //通知读取本地edf数据（脑电信号， 基本参数， 第几通道）
+    connect(m_impl->multiControl->m_dataSystem, &HDataSystem_interface::emitEdfData
+            , this, &HMultiControlWrapper::emitEdfData);
 }
 
 // 析构函数中释放 Impl
@@ -112,9 +129,26 @@ void HMultiControlWrapper::stopBlinkDetection()
     m_impl->multiControl->stopBlinkDetection();
 }
 
-void HMultiControlWrapper::searchDeviceList()
+void HMultiControlWrapper::onSearchDeviceList()
 {
     m_impl->multiControl->searchDeviceList();
 }
+
+BasicParameter HMultiControlWrapper::getParameter()
+{
+    return m_impl->multiControl->m_dataSystem->getParameter();
+}
+
+void HMultiControlWrapper::onEventDispatcher(hnnk::DataAppOperator type, QVariant val)
+{
+    return m_impl->multiControl->m_dataSystem->eventDispatcher(type, val);
+}
+
+void HMultiControlWrapper::onSetEpochInfo(int eegch, int eventch, int epochlen, int other)
+{
+    return m_impl->multiControl->m_dataSystem->setEpochInfo(eegch, eventch, epochlen, other);
+}
+
+
 
 

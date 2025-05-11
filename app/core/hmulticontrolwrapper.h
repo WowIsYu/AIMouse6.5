@@ -45,10 +45,21 @@ public:
     QString launchBlinkDetection(int algoType, QString modelName ="");
     //停止算法检测
     void stopBlinkDetection();
-    //搜索设备
-    void searchDeviceList();
+    /**
+     * @brief getParameter 获取本地保存的设备基本信息, 调用该函数前发起SPO_SELECTINFO 调用
+     * @return 本地保存的设备基本信息
+     */
+    hnnk::BasicParameter getParameter();
 
-    hnnk::HDataSystem_interface *m_dataSystem;
+
+public slots:
+    void onEventDispatcher(hnnk::DataAppOperator type, QVariant val);
+
+    void onSetEpochInfo(int eegch, int eventch, int epochlen, int other = 0);
+    //搜索设备
+    void onSearchDeviceList();
+
+
 private:
     class Impl;
     Impl *m_impl;
@@ -72,6 +83,14 @@ signals:
     void notifyCalibrationResult(bool, float score);
     //SDK事件:校准标识触发信号
     void notifyCaliTrigger();
+
+    void emitEvent(QVector<hnnk::EegDataChan> eogVec);
+    void emitChsAndSampRate(int chs, int srate);
+    void emitAddtionData(QVector<hnnk::GYRODATA> gyroDatas, QVector<unsigned char> channoff, double battery);
+    void emitUpdateAmpTestInfo(hnnk::AmpTestInfo);        //自检返回结果
+    void emitConnectChange(hnnk::CONNECTUPDATE);
+    void emitEdfData(QVector<hnnk::DataPoint> &, QVariant &, int);
+
 };
 
 #endif // HMULTICONTROLWRAPPER_H

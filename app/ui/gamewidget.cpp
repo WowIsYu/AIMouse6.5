@@ -1,13 +1,14 @@
-#include "game.h"
-#include "ui_game.h"
+#include "gamewidget.h"
+#include "ui/ui_gamewidget.h"
+#include "ui_gamewidget.h"
 #include "snakegame.h"
 #include <QDir>
 #include <QByteArray>
 #include "views/mazeGame.h"
-GreedySnakeGame::GreedySnakeGame(QWidget *parent)
+GameWidget::GameWidget(QWidget *parent)
     : QWidget(parent)
     ,
-    ui(new Ui::GreedySnakeGame)
+    ui(new Ui::GameWidget)
 {
 
     // 初始化静态库的资源（对应 nagano_res.qrc）
@@ -19,14 +20,14 @@ GreedySnakeGame::GreedySnakeGame(QWidget *parent)
     timer = new QTimer(this);
 }
 
-GreedySnakeGame::~GreedySnakeGame()
+GameWidget::~GameWidget()
 {
     process->close();
     p_mario->close();
     delete ui;
 }
 
-void GreedySnakeGame::on_btn_GreedySnakeGame_clicked()
+void GameWidget::on_btn_GreedySnakeGame_clicked()
 {
     qDebug() << "GreedySnakeGame";
     SnakeGame *w = new SnakeGame();
@@ -44,7 +45,7 @@ void GreedySnakeGame::on_btn_GreedySnakeGame_clicked()
     w->setAttribute(Qt::WA_DeleteOnClose);  // 窗口关闭时自动删除
 }
 
-void GreedySnakeGame::on_btn_BlackPuzzle_clicked()
+void GameWidget::on_btn_BlackPuzzle_clicked()
 {
     qDebug() << "GreedySnakeGame";
     MazeGame *w = new MazeGame();
@@ -58,33 +59,33 @@ void GreedySnakeGame::on_btn_BlackPuzzle_clicked()
 
 
 
-void GreedySnakeGame::onAttenDetectionResult(double val) {
+void GameWidget::onAttenDetectionResult(double val) {
     // 复制给 attention，便于传送注意力值给 process
     attention = static_cast<int>(val * 100);
     qDebug() << "Updated attention" << attention;
 }
 
-void GreedySnakeGame::onGyroData(double x, double y)
+void GameWidget::onGyroData(double x, double y)
 {
     this->x = x;
     this->y = y;
     qDebug() << "Updated GyroData" << x << y;
 }
 
-void GreedySnakeGame::onBlinked(int blinkValue)
+void GameWidget::onBlinked(int blinkValue)
 {
     this->blinked = blinkValue > 0 ? true : false;
     qDebug() << "Updated blinked:" << blinked;
 }
 
-void GreedySnakeGame::onMonthAttention(double attentionValue)
+void GameWidget::onMonthAttention(double attentionValue)
 {
     this->monthAttention = attentionValue;
     qDebug() << "Updated monthAttention";
 }
 
 
-void GreedySnakeGame::onDirection(double x, double y)
+void GameWidget::onDirection(double x, double y)
 {
     // 获取当前屏幕
     QScreen *screen = QGuiApplication::primaryScreen();
@@ -143,7 +144,7 @@ void GreedySnakeGame::onDirection(double x, double y)
 
 
 
-void GreedySnakeGame::on_btn_mario_clicked()
+void GameWidget::on_btn_mario_clicked()
 {
 
     // 启动可执行文件

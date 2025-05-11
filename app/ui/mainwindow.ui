@@ -67,6 +67,12 @@ QToolButton:pressed,QToolButton:checked{
 	background-color: #E9E9E9;	
 }
 
+#btnSet:pressed,#btnSet:checked{
+	background-color:#F6F6F6;
+	color:#626262;
+    border-radius: 5px;
+}
+
 QPushButton:default {
     /*border-color: navy; /* make the default button prominent */*/
 }
@@ -498,13 +504,13 @@ QPushButton:default {
              <bool>true</bool>
             </property>
             <property name="autoExclusive">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
             <property name="toolButtonStyle">
              <enum>Qt::ToolButtonTextBesideIcon</enum>
             </property>
             <property name="autoRaise">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="arrowType">
              <enum>Qt::NoArrow</enum>
@@ -765,8 +771,12 @@ QPushButton:default {
           <number>3</number>
          </property>
          <property name="currentIndex">
-          <number>-1</number>
+          <number>1</number>
          </property>
+         <widget class="WaveFormWidget" name="pageWaveFrom"/>
+         <widget class="BlinkCaliWidget" name="pageBlink"/>
+         <widget class="GameWidget" name="pageGame"/>
+         <widget class="DataWidget" name="pageAttention"/>
         </widget>
        </item>
       </layout>
@@ -780,6 +790,32 @@ QPushButton:default {
    </property>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GameWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">gamewidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>WaveFormWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">waveformwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DataWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">datawidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>BlinkCaliWidget</class>
+   <extends>QWidget</extends>
+   <header>blinkcaliwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../res.qrc"/>
  </resources>

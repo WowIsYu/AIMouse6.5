@@ -30,13 +30,13 @@ set(PROJECT_SOURCES
   ${THIRD_PARTY_DIR}/tchartview/tchartview.cpp
   ${THIRD_PARTY_DIR}/QHotkey/qhotkey.cpp
   ${THIRD_PARTY_DIR}/QHotkey/qhotkey_win.cpp
-  ui/attention.cpp
-  ui/blinkcalibration.cpp
-  ui/game.cpp
-  ui/login.cpp
+  ui/datawidget.cpp
+  ui/blinkcaliwidget.cpp
+  ui/gamewidget.cpp
+  ui/loginwidget.cpp
   ui/mainwindow.cpp
-  ui/setup.cpp
-  ui/waveform.cpp
+  ui/setupwidget.cpp
+  ui/waveformwidget.cpp
   toolui/choosedevice.cpp
   toolui/initdatasystemprotocol.cpp
   toolui/markingtester.cpp
@@ -48,26 +48,26 @@ set(PROJECT_SOURCES
   ${THIRD_PARTY_DIR}/qcustomplot/qcustomplot.h
   ${THIRD_PARTY_DIR}/tchartview/tchartview.h
   ${THIRD_PARTY_DIR}/QHotkey/qhotkey.h
-  ui/attention.h
-  ui/blinkcalibration.h
-  ui/game.h
-  ui/login.h
+  ui/datawidget.h
+  ui/blinkcaliwidget.h
+  ui/gamewidget.h
+  ui/loginwidget.h
   ui/mainwindow.h
-  ui/setup.h
-  ui/waveform.h
+  ui/setupwidget.h
+  ui/waveformwidget.h
   toolui/choosedevice.h
   toolui/initdatasystemprotocol.h
   toolui/markingtester.h
   toolui/setinfowidget.h
   toolui/vmousemainwindow.h
 
-  ui/attention.ui
-  ui/blinkcalibration.ui
-  ui/game.ui
-  ui/login.ui
+  ui/datawidget.ui
+  ui/blinkcaliwidget.ui
+  ui/gamewidget.ui
+  ui/loginwidget.ui
   ui/mainwindow.ui
-  ui/setup.ui
-  ui/waveform.ui
+  ui/setupwidget.ui
+  ui/waveformwidget.ui
   toolui/choosedevice.ui
   toolui/initdatasystemprotocol.ui
   toolui/markingtester.ui
@@ -82,6 +82,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         res.qrc
         core/databasemanager.cpp core/databasemanager.h
         core/hmulticontrolwrapper.h core/hmulticontrolwrapper.cpp
+        toolui/datadetail.h toolui/datadetail.cpp toolui/datadetail.ui
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET app APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

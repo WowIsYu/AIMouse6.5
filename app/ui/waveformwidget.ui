@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Waveform</class>
- <widget class="QWidget" name="Waveform">
+ <class>WaveFormWidget</class>
+ <widget class="QWidget" name="WaveFormWidget">
   <property name="geometry">
    <rect>
     <x>0</x>

@@ -1,5 +1,5 @@
-#ifndef WAVEFORM_H
-#define WAVEFORM_H
+#ifndef WAVEFORMWIDGET_H
+#define WAVEFORMWIDGET_H
 
 #include <QWidget>
 #include <QLabel>
@@ -12,8 +12,6 @@
 #include <vector>
 #include "markingtester.h"
 
-
-#include "hdatasystem_interface.h"
 #include "dataset.h"
 
 #include "qcustomplot.h"
@@ -21,7 +19,7 @@
 using namespace hnnk;
 
 namespace Ui {
-class Waveform;
+    class WaveFormWidget;
 }
 
 enum UsingState           ///三种使用方式，不记录（仅可视化波形）、记录、读取文件
@@ -31,13 +29,13 @@ enum UsingState           ///三种使用方式，不记录（仅可视化波形
     STATE_READ
 };
 
-class Waveform : public QWidget
+class WaveFormWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit Waveform(QWidget *parent = nullptr, hnnk::HDataSystem_interface *m_dataSystemSDK = nullptr);
-    ~Waveform();
+    explicit WaveFormWidget(QWidget *parent = nullptr);
+    ~WaveFormWidget();
     /**
      * @brief setupPlotEdfChan 绘制edf通道波形
      * @param customPlot
@@ -113,7 +111,16 @@ signals:
      */
     void popSetWindows(QString);
 
+    void emitEventDispatcher(hnnk::DataAppOperator type, QVariant val);
+
+    void emitSetEpochInfo(int eegch, int eventch, int epochlen, int other = 0);
+
+    void emitGetParameter();
+
 public slots:
+
+    void onReciveParameter(hnnk::BasicParameter parameter);
+
     void onPopMsgBox(int type, QString msg);
 
     /**
@@ -188,10 +195,6 @@ private:
 
     void clearScreen();
 
-public:
-    hnnk::HDataSystem_interface *m_dataSystemSDK;      ///数据采集SDK实例
-public: signals:
-    void sendToStatusBar(QString Message);
 private:
 
     bool m_isSmoothing;                     ///是否要限波
@@ -204,7 +207,7 @@ private:
     /***************************
      * 窗体控件
      * *************************/
-    Ui::Waveform *ui;
+    Ui::WaveFormWidget *ui;
     QLabel * m_chAndRateInfo;              ///通道数和采样率信息
     QLabel* m_dataLost1;
     QLabel* m_dataLost2;
@@ -236,6 +239,8 @@ private:
     MarkingTester *m_pMarkingTester;        ///测试打标窗口
     QMenuBar *m_meneBar;                    ///菜单选择
 
+    BasicParameter parameter;
+
 };
 
-#endif // WAVEFORM_H
+#endif // WAVEFORMWIDGET_H

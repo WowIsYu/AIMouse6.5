@@ -1,11 +1,11 @@
-#include "blinkcalibration.h"
-#include "ui_blinkcalibration.h"
+#include "blinkcaliwidget.h"
+#include "ui_blinkcaliwidget.h"
 #include "QTimer"
 #include <QMessageBox>
 
-BlinkCalibration::BlinkCalibration(QWidget *parent) :
+BlinkCaliWidget::BlinkCaliWidget(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::BlinkCalibration)
+    ui(new Ui::BlinkCaliWidget)
 {
     ui->setupUi(this);
 
@@ -20,13 +20,13 @@ BlinkCalibration::BlinkCalibration(QWidget *parent) :
 
 }
 
-BlinkCalibration::~BlinkCalibration()
+BlinkCaliWidget::~BlinkCaliWidget()
 {
     delete ui;
 }
 
 //校准触发信号
-void BlinkCalibration::onCaliTrigger()
+void BlinkCaliWidget::onCaliTrigger()
 {
     // 假设ui->caliIcon是一个QLabel
     QPixmap pixmap(":/img/robot1.png");
@@ -43,7 +43,7 @@ void BlinkCalibration::onCaliTrigger()
     });
 }
 
-void BlinkCalibration::onCalibrationResult(bool isOk, float score)
+void BlinkCaliWidget::onCalibrationResult(bool isOk, float score)
 {
     if(isOk){
         this->ui->caliResultLabel->setText(QString::number(score,'f', 2));
@@ -52,7 +52,7 @@ void BlinkCalibration::onCalibrationResult(bool isOk, float score)
     }
 }
 
-void BlinkCalibration::on_beginCaliButton_clicked()
+void BlinkCaliWidget::on_beginCaliButton_clicked()
 {
     QString errMsg;
     //调用SDK启动校准

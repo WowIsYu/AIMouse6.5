@@ -40,9 +40,19 @@ struct HNNKData {
 
 class DatabaseManager : public QObject {
     Q_OBJECT
-public:
+private:
     explicit DatabaseManager(QObject *parent = nullptr);
     ~DatabaseManager() override;
+public:
+    // 单例设计模式
+    static DatabaseManager& instance();
+
+    void closeDatabase();
+    bool openDatabase();
+
+    QString getDatabasePath() const;
+    void setDatabasePath(const QString& path);
+
 
     // 初始化数据库并创建必要表，返回是否成功
     bool initializeUserDatabase();                  // 初始化 user_info.db
@@ -83,6 +93,9 @@ private:
     QSqlDatabase m_db;
     QSqlDatabase m_hnnkDb;
     QSqlError m_lastError;
+
+    //文件存放路径
+    QString dbPath;
 
     bool createUserTables();
     bool createHnnkTables();       // 创建 db_data 表

@@ -1,20 +1,20 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef GAMEWIDGET_H
+#define GAMEWIDGET_H
 
 #include <QWidget>
 #include "qprocess.h"
 
 namespace Ui {
-class GreedySnakeGame;
+class GameWidget;
 }
 
-class GreedySnakeGame : public QWidget
+class GameWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit GreedySnakeGame(QWidget *parent = nullptr);
-    ~GreedySnakeGame();
+    explicit GameWidget(QWidget *parent = nullptr);
+    ~GameWidget();
 
     // 创建 QProcess 对象, 用于打开VS黑暗迷宫
     QProcess *process = nullptr;
@@ -48,7 +48,7 @@ private slots:
     void on_btn_mario_clicked();
 
 private:
-    Ui::GreedySnakeGame *ui;
+    Ui::GameWidget *ui;
 };
 
-#endif // GAME_H
+#endif // GAMEWIDGET_H

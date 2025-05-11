@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "login.h"
+#include "loginwidget.h"
 #include <QRect>
 #include <QPainter>
 #include <QStyleOption>
@@ -26,29 +26,16 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    // 安全释放资源
-    if (waveFormUi) delete waveFormUi;
-    if (blinkCaliUi) delete blinkCaliUi;
-    if (greedySnakeGameUi) delete greedySnakeGameUi;
-    if (attention) delete attention;
-    if (setUpUi) delete setUpUi;
     if (btnGroup) delete btnGroup;
     if (main_vmouse) delete main_vmouse;
     if (m_pchooseWindow) delete m_pchooseWindow;
 
+    delete loginWidget;
     delete ui;
 }
 
 void MainWindow::initDatabases() {
-    dbManager = new DatabaseManager(this);
-    if (!dbManager->initializeUserDatabase()) {
-        qCritical() << "Failed to initialize User database!";
-    }
-    dbManager = new DatabaseManager(this);
-    if (!dbManager->initializeHnnkDatabase()) {
-        qCritical() << "Failed to initialize HnnkData database!";
-    }
-
+    DatabaseManager::instance();
 }
 
 void MainWindow::initMuitl() {
@@ -58,10 +45,10 @@ void MainWindow::initMuitl() {
 
 void MainWindow::initLogin() {
     //登录界面
-    m_login = new Login();
+    loginWidget = new LoginWidget();
     qDebug() << "MainWindow:Login 已创建实例";
 
-    connect(m_login, &Login::onLoginClose, []() {
+    connect(loginWidget, &LoginWidget::onLoginClose, []() {
         // qDebug() << "关闭窗口";
         // qApp->quit();
         exit(0);
@@ -71,19 +58,19 @@ void MainWindow::initLogin() {
     loadRemembered();
 
     // 连接信号和槽
-    connect(m_login, &Login::onInsertUser, this,&MainWindow::insertUser);
+    connect(loginWidget, &LoginWidget::onInsertUser, this,&MainWindow::insertUser);
 
     //登录相关
-    connect(m_login, &Login::emitLogin, this, &MainWindow::onLogin);
-    connect(this, &MainWindow::emitLoginResult, m_login, &Login::onLoginResult);
+    connect(loginWidget, &LoginWidget::emitLogin, this, &MainWindow::onLogin);
+    connect(this, &MainWindow::emitLoginResult, loginWidget, &LoginWidget::onLoginResult);
 
     //注册相关
-    connect(m_login, &Login::emitRegister, this, &MainWindow::onRegister);
-    connect(this, &MainWindow::emitRegisterResult, m_login, &Login::onRegisterResult);
+    connect(loginWidget, &LoginWidget::emitRegister, this, &MainWindow::onRegister);
+    connect(this, &MainWindow::emitRegisterResult, loginWidget, &LoginWidget::onRegisterResult);
 
     //校验码
-    connect(m_login, &Login::emitGraphCode, this, &MainWindow::onGraphCode);
-    connect(this, &MainWindow::emitGraphCode, m_login, &Login::onGraphCode);
+    connect(loginWidget, &LoginWidget::emitGraphCode, this, &MainWindow::onGraphCode);
+    connect(this, &MainWindow::emitGraphCode, loginWidget, &LoginWidget::onGraphCode);
 }
 
 /**
@@ -93,10 +80,10 @@ void MainWindow::initLogin() {
 void MainWindow::initMainWindow()
 {
     //进入页面时显示登录界面
-    m_login->setWindowModality(Qt::ApplicationModal);
-    m_login->setWindowFlags(m_login->windowFlags() | Qt::WindowStaysOnTopHint);
-    m_login->show();
-    m_login->raise();
+    loginWidget->setWindowModality(Qt::ApplicationModal);
+    loginWidget->setWindowFlags(loginWidget->windowFlags() | Qt::WindowStaysOnTopHint);
+    loginWidget->show();
+    loginWidget->raise();
     this->hide();
 }
 
@@ -105,7 +92,7 @@ void MainWindow::onLoginSuccess()
 {
     qDebug() << "登录成功";
 
-    m_login->setStatusBar("正在加载页面，请稍后");
+    loginWidget->setStatusBar("正在加载页面，请稍后");
     QCoreApplication::processEvents(); // 处理事件
 
     initInstance();
@@ -125,13 +112,21 @@ void MainWindow::onLoginSuccess()
 
     // 开启定时器
     timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &MainWindow::onUpdateBattaryStatus);
+    connect(timer, &QTimer::timeout, [this]() {
+        parameter = m_multiControl->getParameter();
 
-    m_login->setStatusBar("界面已加载完毕，欢迎使用！");
+        int battary = parameter.m_battaryStatus;
+        qDebug() << "battary" << battary;
+        ui->barBattary->setValue(battary);
+
+        emit emitParameter(parameter);
+    });
+
+    loginWidget->setStatusBar("界面已加载完毕，欢迎使用！");
 
     // 延迟 1 秒后隐藏登录窗口并显示主窗口
     QTimer::singleShot(500, this, [this] {
-        m_login->hide();
+        loginWidget->hide();
         this->show();
     });
 
@@ -141,20 +136,22 @@ void MainWindow::onLoginSuccess()
 
 void MainWindow::initConnections() {
 
-    connect(this, &MainWindow::emitHnnkData, attention, &Attention::onHnnkData);
-    connect(attention, &Attention::emitUpdateHnnkData, this, &MainWindow::onHnnkData);
+    connect(this, &MainWindow::emitHnnkData, dataWidget, &DataWidget::onHnnkData);
+    connect(dataWidget, &DataWidget::emitUpdateHnnkData, this, &MainWindow::onHnnkData);
 
-    connect(m_pchooseWindow, &ChooseDevice::refreshList, this, &MainWindow::onSearchDeviceList);
-    connect(m_pchooseWindow, SIGNAL(checkSignal(hnnk::DataAppOperator, QString )), this, SLOT(onChooseBlueEvent(hnnk::DataAppOperator, QString)));
+    connect(m_pchooseWindow, &ChooseDevice::refreshList, m_multiControl, &HMultiControlWrapper::onSearchDeviceList);
     connect(m_multiControl, &HMultiControlWrapper::notifyDeviceNameUpdate, m_pchooseWindow, &ChooseDevice::onUpdateDeviceNameList);
-
     connect(m_multiControl, &HMultiControlWrapper::emitSearchNetDeviceOver, this, &MainWindow::onSearchOver);
-    connect(m_pchooseWindow, &ChooseDevice::checkSignal, m_multiControl, &HMultiControlWrapper::connectDevice);
+    connect(m_pchooseWindow, &ChooseDevice::checkSignal,
+            m_multiControl, &HMultiControlWrapper::connectDevice);
+
     connect(m_multiControl, &HMultiControlWrapper::emitMsgBox, this, &MainWindow::onMsg);
     connect(m_multiControl ,&HMultiControlWrapper::emitGyroData, this, &MainWindow::onGyroData);
     connect(m_multiControl, &HMultiControlWrapper::notifyBlinkDetectionResult, this, &MainWindow::onBlinkDetectionResult);
     connect(m_multiControl, &HMultiControlWrapper::notifyBlinkDetectionResult,this, &MainWindow::onBlinkCheckResult);
-    connect(m_multiControl, &HMultiControlWrapper::notifyConnectState, [this]() {on_statusBar("设备已连接");}) ;
+    connect(m_multiControl, &HMultiControlWrapper::notifyConnectState, [this]() {
+        on_statusBar("设备已连接");
+    });
     connect(m_multiControl, &HMultiControlWrapper::notifyAttenDetectionResult
             , [this](double val) {
                 if (m_isDetecting) {
@@ -163,16 +160,57 @@ void MainWindow::initConnections() {
                 attentionShow->onReceiveResult(val);
      });
 
-    connect(m_multiControl, &HMultiControlWrapper::notifyAttenDetectionResult, setUpUi, &SetUp::onAttenDetectionResult);
-    connect(setUpUi, &SetUp::emitSetSensitivity, m_multiControl, &HMultiControlWrapper::setSensitivity);
-    connect(setUpUi, &SetUp::emitStopBlinkDetection, this, &MainWindow::onStopBlinkDetection);
-    connect(setUpUi, &SetUp::emitStartBlinkDetection, this, &MainWindow::onStartBlinkDetection);
-    connect(setUpUi, &SetUp::emitShowAttention, this, &MainWindow::onShowAttention);
+    connect(m_multiControl, &HMultiControlWrapper::notifyAttenDetectionResult, setUpWidget, &SetUpWidget::onAttenDetectionResult);
+    connect(setUpWidget, &SetUpWidget::emitSetSensitivity, m_multiControl, &HMultiControlWrapper::setSensitivity);
+    connect(setUpWidget, &SetUpWidget::emitStopBlinkDetection, this, &MainWindow::onStopBlinkDetection);
+    connect(setUpWidget, &SetUpWidget::emitStartBlinkDetection, this, &MainWindow::onStartBlinkDetection);
+    connect(setUpWidget, &SetUpWidget::emitShowAttention, this, &MainWindow::onShowAttention);
 
-    connect(m_multiControl,&HMultiControlWrapper::notifyCaliTrigger, blinkCaliUi, &BlinkCalibration::onCaliTrigger);
-    connect(m_multiControl, &HMultiControlWrapper::notifyCalibrationResult, blinkCaliUi, &BlinkCalibration::onCalibrationResult);
+    connect(m_multiControl,&HMultiControlWrapper::notifyCaliTrigger, blinkCaliWidget, &BlinkCaliWidget::onCaliTrigger);
+    connect(m_multiControl, &HMultiControlWrapper::notifyCalibrationResult, blinkCaliWidget, &BlinkCaliWidget::onCalibrationResult);
     connect(m_multiControl, &HMultiControlWrapper::notifyCalibrationResult, [this]() {on_statusBar("校准结束");});
-    connect(blinkCaliUi, &BlinkCalibration::emitLaunchCali, this, &MainWindow::onLaunchCali);
+    connect(blinkCaliWidget, &BlinkCaliWidget::emitLaunchCali, this, &MainWindow::onLaunchCali);
+
+    connect(waveFormWidget, &WaveFormWidget::emitEventDispatcher, m_multiControl, &HMultiControlWrapper::onEventDispatcher);
+
+
+    //通知读取脑电信号 重要！！！！！
+    connect(m_multiControl,&HMultiControlWrapper::emitEvent
+            , this, &MainWindow::onReciveEegData);
+    connect(this, &MainWindow::emitParameter, waveFormWidget, &WaveFormWidget::onReciveParameter);
+    connect(this, &MainWindow::emitEegData, waveFormWidget, &WaveFormWidget::onReciveEegData);
+    //通知读取脑电通道及采样数据(int chs, int rate)设备总的通道数， 采样率
+    connect(m_multiControl,&HMultiControlWrapper::emitChsAndSampRate
+            , waveFormWidget, &WaveFormWidget::onDeviceChannelAndSampRate);
+    //通知读取陀螺仪，通道状态， 电量三种数据（QVector<hnnk::GYRODATA> gyroDatas, QVector<unsigned char> channoff, double battery）
+    connect(m_multiControl,&HMultiControlWrapper::emitAddtionData
+            , waveFormWidget, &WaveFormWidget::onAddtionData);
+    //通知连接状态发生改变
+    connect(m_multiControl,&HMultiControlWrapper::emitConnectChange
+            , waveFormWidget, &WaveFormWidget::onConnectUpdate);
+    //通知读取设备自检结果(hnnk::AmpTestInfo info)
+    connect(m_multiControl,&HMultiControlWrapper::emitUpdateAmpTestInfo
+            , waveFormWidget, &WaveFormWidget::onUpdateSelfCheckInfo);
+    //通知读取本地edf数据（脑电信号， 基本参数， 第几通道）
+    connect(m_multiControl,&HMultiControlWrapper::emitEdfData
+            , waveFormWidget, &WaveFormWidget::onReadEdfDataToDouble);
+
+}
+
+void MainWindow::onReciveEegData(QVector<EegDataChan> eogVec)
+{
+
+    connect(m_multiControl,&HMultiControlWrapper::emitEvent
+            , waveFormWidget, &WaveFormWidget::onReciveEegData);
+    std::vector<double> eogData;
+    for (auto &it : eogVec) {
+        eogData.insert(eogData.end(), it.data.begin(), it.data.end());
+    }
+    qDebug() << " emitData" << eogData.at(0) << eogData.at(1);
+
+    //发送给波形图界面
+    BasicParameter parameter = m_multiControl->getParameter();
+    emit emitEegData(eogVec);
 }
 
 void MainWindow::initUI() {
@@ -181,19 +219,13 @@ void MainWindow::initUI() {
     this->setWindowFlags(Qt::FramelessWindowHint);//隐藏最大最小化等按键
 
     btnGroup = new QButtonGroup(this);
-    ui->stackedWidget->addWidget(waveFormUi);       //将五个界面添加到ui的stacked中
-    ui->stackedWidget->addWidget(blinkCaliUi);//waveFromUi界面的index为0, 后面依次递增
-    ui->stackedWidget->addWidget(greedySnakeGameUi);
-    ui->stackedWidget->addWidget(setUpUi);
-    ui->stackedWidget->addWidget(attention);
-    // ui->stackedWidget->addWidget();
 
     btnGroup->addButton(ui->btnWaveform, 0);         //将五个按钮都添加到btnGroup中，便于管理
     btnGroup->addButton(ui->btnBlink, 1);
     btnGroup->addButton(ui->btnGame, 2);
-    btnGroup->addButton(ui->btnSet, 3);
-    btnGroup->addButton(ui->btnAttention, 4);
-    // btnGroup->addButton(ui->btnAI, 5);
+    btnGroup->addButton(ui->btnAttention, 3);
+    btnGroup->addButton(ui->btnAI, 4);
+    // btnGroup->addButton(ui->btnSet, 5);
 
     connect(btnGroup, &QButtonGroup::idClicked          //将按钮和width界面用信号槽连接，以达到变换界面
             , ui->stackedWidget, &QStackedWidget::setCurrentIndex);
@@ -224,11 +256,13 @@ void MainWindow::initInstance() {
     main_vmouse = new VMouseMainWindow();
 
     // Ui界面
-    waveFormUi = new Waveform(this, m_multiControl->m_dataSystem);
-    blinkCaliUi = new BlinkCalibration(this);
-    setUpUi = new SetUp(this);
-    greedySnakeGameUi = new GreedySnakeGame(this);
-    attention = new Attention(this);
+    waveFormWidget = ui->pageWaveFrom;
+    blinkCaliWidget = ui->pageBlink;
+    gameWidget = ui->pageGame;
+    dataWidget = ui->pageAttention;
+
+    setUpWidget = new SetUpWidget();
+    setUpWidget->hide();
 
     //注意力显示界面
     attentionShow = new Nagano(this);
@@ -240,8 +274,8 @@ void MainWindow::on_statusBar(QString message) {
 
 void MainWindow::drawBar()
 {
-    attention->loadDataFromDatabase();
-    attention->drawBarChartForWeek(QDate::currentDate(), true);
+    dataWidget->loadDataFromDatabase();
+    dataWidget->drawBarChartForWeek(QDate::currentDate(), true);
 }
 
 
@@ -260,14 +294,14 @@ void MainWindow::on_btnAI_clicked()
 
 void MainWindow::loadRemembered() {
     // 查找所有 savePassword=true 的用户，这里只取第一个
-    auto users = dbManager->getAllUsers();
+    auto users = DatabaseManager::instance().getAllUsers();
     for (const auto &u : std::as_const(users)) {
         qDebug() << u.addTime;
         if (u.savePassword) {
             // ui->editAccount->setText(u.account);
             // ui->editPassword->setText(u.password);
             // ui->chkRemember->setChecked(true);
-            m_login->onLoadRemembered(u.account, u.account);
+            loginWidget->onLoadRemembered(u.account, u.account);
             break;
         }
     }
@@ -287,12 +321,12 @@ void MainWindow::insertUser(QString acct, QString pwd, bool isChecked)
     newUser.account       = acct;
     newUser.password      = pwd;
     // newUser.nickname      = ui->editRegNickname->text();
-    qint64 id = dbManager->insertUser(newUser);
+    qint64 id = DatabaseManager::instance().insertUser(newUser);
 
     // 1）根据复选框更新记住密码标志
     bool wantRemember = isChecked;
-    if (!dbManager->updateSavePassword(acct, wantRemember)) {
-        qWarning() << "更新记住密码失败：" << dbManager->lastError().text();
+    if (!DatabaseManager::instance().updateSavePassword(acct, wantRemember)) {
+        qWarning() << "更新记住密码失败：" << DatabaseManager::instance().lastError().text();
     }
     this->account = acct;
     qDebug() << "account name:" << account;
@@ -313,9 +347,9 @@ void MainWindow::insertHnnkData(const QString &account, const QDateTime &startTi
     data.avgValue = averageAttention;
     data.event = "Start detect Attention value.";
 
-    qint64 id = dbManager->insertHnnkData(data);
+    qint64 id = DatabaseManager::instance().insertHnnkData(data);
     if (id < 0) {
-        QMessageBox::critical(this, "添加失败", dbManager->lastError().text());
+        QMessageBox::critical(this, "添加失败", DatabaseManager::instance().lastError().text());
     } else {
         QMessageBox::information(this, "添加成功", QString("您的数据ID：%1").arg(id));
         // 可自动跳转到登录页，并填写账号
@@ -324,7 +358,7 @@ void MainWindow::insertHnnkData(const QString &account, const QDateTime &startTi
 
 
 void MainWindow::onHnnkData() {
-    QList<HNNKData> data = dbManager->getHnnkDataByAccount(account);
+    QList<HNNKData> data = DatabaseManager::instance().getHnnkDataByAccount(account);
     emit emitHnnkData(data);
 }
 
@@ -355,14 +389,6 @@ void MainWindow::onGraphCode()
     m_multiControl->getGraphValidateCode(pixMap, m_imgId);
     qDebug() << "----------------------------------------------";
     emit emitGraphCode(pixMap, m_imgId);
-}
-/**
- * 查找设备
- * @brief MainWindow::onSearchDeviceList
- */
-void MainWindow::onSearchDeviceList()
-{
-    m_multiControl->searchDeviceList();
 }
 
 void MainWindow::onSearchOver()
@@ -508,15 +534,6 @@ void MainWindow::onGyroData(double x, double y)
     main_vmouse->move(x,y);
 }
 
-
-void MainWindow::onUpdateBattaryStatus()
-{
-    int battary = m_multiControl->m_dataSystem->getParameter().m_battaryStatus;
-    qDebug() << "battary" << battary;
-    ui->barBattary->setValue(battary);
-}
-
-
 void MainWindow::onShowAttention()
 {
     attentionShow->show();
@@ -566,3 +583,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
     //     qDebug() << "坐标回正";
     // }
 }
+
+void MainWindow::on_btnSet_clicked()
+{
+    setUpWidget->show();
+}
+

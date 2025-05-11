@@ -17,14 +17,14 @@ int main(int argc, char *argv[])
         w.setVisible(true);
     });
     QObject::connect(exitAct, &QAction::triggered, [&](){
-        QApplication::quit();
+        // QApplication::quit();
+        exit(0);
     });
 
     menu.addAction(showAct);
     menu.addAction(exitAct);
 
     sysTray.setContextMenu(&menu);
-
     sysTray.show();
 
     w.initMainWindow();

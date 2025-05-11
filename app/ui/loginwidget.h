@@ -1,5 +1,5 @@
-#ifndef LOGIN_H
-#define LOGIN_H
+#ifndef LOGINWIDGET_H
+#define LOGINWIDGET_H
 
 #include <QWidget>
 #include <QMap>
@@ -9,17 +9,17 @@
 
 
 namespace Ui {
-class Login;
+class LoginWidget;
 }
 
 
-class Login : public QWidget
+class LoginWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit Login(QWidget *parent = nullptr);
-    ~Login();
+    explicit LoginWidget(QWidget *parent = nullptr);
+    ~LoginWidget();
     bool eventFilter(QObject *obj, QEvent *event);
     void insertUser();
 
@@ -66,10 +66,10 @@ private slots:
     void on_btn_close_clicked();
 
 private:
-    Ui::Login *ui;
+    Ui::LoginWidget *ui;
     QString m_imgId;
     bool m_leftMousePressed;
     QPoint m_StartPoint;
 };
 
-#endif // LOGIN_H
+#endif // LOGINWIDGET_H

@@ -1,6 +1,6 @@
-#include "attention.h"
+#include "datawidget.h"
 #include "qvalueaxis.h"
-#include "ui_attention.h"
+#include "ui_datawidget.h"
 
 #include <QDateTime>
 #include <QRandomGenerator>
@@ -9,9 +9,9 @@
 #include <QBarSeries>
 #include <QBarCategoryAxis>
 
-Attention::Attention(QWidget *parent)
+DataWidget::DataWidget(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::Attention)
+    , ui(new Ui::DataWidget)
 {
     ui->setupUi(this);
 
@@ -21,7 +21,7 @@ Attention::Attention(QWidget *parent)
     //初始化
     iniBarChart();
 
-    connect(ui->calendarWidget, &QCalendarWidget::selectionChanged, this, &Attention::on_calendarWidget_selectionChanged);
+    connect(ui->calendarWidget, &QCalendarWidget::selectionChanged, this, &DataWidget::on_calendarWidget_selectionChanged);
 
     // // 表格高度随内容自动扩展
 
@@ -31,12 +31,12 @@ Attention::Attention(QWidget *parent)
 }
 
 
-Attention::~Attention()
+DataWidget::~DataWidget()
 {
     delete ui;
 }
 
-void Attention::countData()
+void DataWidget::countData()
 { //数据统计
     QTreeWidgetItem *item;  //节点
     for(int i=COL_AVERAGE -1;i<=COL_AVERAGE -1;i++)
@@ -83,7 +83,7 @@ void Attention::countData()
     }
 }
 
-void Attention::iniBarChart()
+void DataWidget::iniBarChart()
 {
     QChart *chart = new QChart();
     chart->setTitle("Average Attention for Selected Week");
@@ -93,7 +93,7 @@ void Attention::iniBarChart()
 
 }
 
-void Attention::onHnnkData(QList<HNNKData> data)
+void DataWidget::onHnnkData(QList<HNNKData> data)
 {
     this->dataList = data;
 
@@ -105,9 +105,9 @@ void Attention::onHnnkData(QList<HNNKData> data)
 
 /**
  * 加载数据库数据
- * @brief Attention::loadDataFromDatabase
+ * @brief DataWidget::loadDataFromDatabase
  */
-void Attention::loadDataFromDatabase()
+void DataWidget::loadDataFromDatabase()
 {
 
     // 创建新的 QStandardItemModel，用于存储所有列
@@ -141,7 +141,7 @@ void Attention::loadDataFromDatabase()
 }
 
 
-void Attention::drawBarChartForWeek(const QDate &date, bool isVertical)
+void DataWidget::drawBarChartForWeek(const QDate &date, bool isVertical)
 {
     QChart *chart = ui->chartView->chart();
     chart->removeAllSeries();
@@ -206,8 +206,8 @@ void Attention::drawBarChartForWeek(const QDate &date, bool isVertical)
     seriesBar->append(maxSet);
     seriesBar->append(medianSet);
 
-    connect(seriesBar, &QBarSeries::hovered, this, &Attention::do_barHovered);
-    connect(seriesBar, &QBarSeries::clicked, this, &Attention::do_barClicked);
+    connect(seriesBar, &QBarSeries::hovered, this, &DataWidget::do_barHovered);
+    connect(seriesBar, &QBarSeries::clicked, this, &DataWidget::do_barClicked);
 
     chart->addSeries(seriesBar);
     chart->addSeries(seriesLine);
@@ -239,7 +239,7 @@ void Attention::drawBarChartForWeek(const QDate &date, bool isVertical)
 }
 
 
-void Attention::removeAllAxis(QChart *chart)
+void DataWidget::removeAllAxis(QChart *chart)
 {//删除一个chart的所有坐标轴
     QList<QAbstractAxis *> axisList=chart->axes();  //获取坐标轴列表
     int count=axisList.count();
@@ -252,30 +252,30 @@ void Attention::removeAllAxis(QChart *chart)
     }
 }
 
-void Attention::on_calendarWidget_selectionChanged()
+void DataWidget::on_calendarWidget_selectionChanged()
 {
     QDate selectedDate = ui->calendarWidget->selectedDate();
     drawBarChartForWeek(selectedDate);
 }
 
-void Attention::on_toolBtn_GenData_clicked()
+void DataWidget::on_toolBtn_GenData_clicked()
 {
     loadDataFromDatabase();
     drawBarChartForWeek(QDate::currentDate());
 }
 
-void Attention::on_btnBuildBarChart_clicked()
+void DataWidget::on_btnBuildBarChart_clicked()
 {
     loadDataFromDatabase();
     drawBarChartForWeek(QDate::currentDate(),true);
 }
 
-void Attention::do_pieHovered(QPieSlice *slice, bool state)
+void DataWidget::do_pieHovered(QPieSlice *slice, bool state)
 {
     slice->setExploded(state);
 }
 
-void Attention::do_barHovered(bool status, int index, QBarSet *barset)
+void DataWidget::do_barHovered(bool status, int index, QBarSet *barset)
 {
     QString str= "hovered barSet="+barset->label();
     if (status)
@@ -285,14 +285,14 @@ void Attention::do_barHovered(bool status, int index, QBarSet *barset)
     // ui->statusbar->showMessage(str);
 }
 
-void Attention::do_barClicked(int index, QBarSet *barset)
+void DataWidget::do_barClicked(int index, QBarSet *barset)
 {
     QString str = "clicked barSet=" + barset->label();
     str += QString::asprintf(", index=%d, count=%d", index, barset->count());
     // ui->statusbar->showMessage(str);
 }
 
-void Attention::on_pushButton_clicked()
+void DataWidget::on_pushButton_clicked()
 {
     emit emitUpdateHnnkData();
 }

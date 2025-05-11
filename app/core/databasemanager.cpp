@@ -6,9 +6,24 @@
 const QString DatabaseManager::UserConnectionName = "UserInfoConnection";
 const QString DatabaseManager::HnnkConnectionName = "HnnkInfoConnection";
 
+
+
+DatabaseManager &DatabaseManager::instance()
+{
+    static DatabaseManager instance;
+    return instance;
+}
+
 DatabaseManager::DatabaseManager(QObject *parent)
     : QObject(parent)
 {
+    //设置数据库保存路径
+    dbPath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/data");
+    if (!QDir().mkpath(dbPath)) {
+        qWarning() << "Failed to create directory:" << dbPath;
+    }
+
+
     // 初始化用户数据库连接
     if (QSqlDatabase::contains(UserConnectionName)) {
         m_db = QSqlDatabase::database(UserConnectionName);
@@ -22,25 +37,23 @@ DatabaseManager::DatabaseManager(QObject *parent)
     } else {
         m_hnnkDb = QSqlDatabase::addDatabase("QSQLITE", HnnkConnectionName);
     }
+
+    //开启数据库
+    openDatabase();
 }
 
 DatabaseManager::~DatabaseManager() {
-    if (m_db.isOpen()) m_db.close();
-    if (m_hnnkDb.isOpen()) m_hnnkDb.close();
+    closeDatabase();
 }
 
 
+
 bool DatabaseManager::initializeUserDatabase() {
-    //设置数据库保存路径
-    QString baseDir = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/data");
-    if (!QDir().mkpath(baseDir)) {
-        qWarning() << "Failed to create directory:" << baseDir;
-        return false;
-    }
+
     //设置数据表名
-    QString dbPath = baseDir + "/user_info.db";
-    m_db.setDatabaseName(dbPath);
-    qDebug() << "Database path:" << dbPath;
+    QString dbTable = dbPath + "/user_info.db";
+    m_db.setDatabaseName(dbTable);
+    qDebug() << "Database path:" << dbTable;
     //开启数据库
     if (!m_db.open()) {
         logError(m_db.lastError(), "open database");
@@ -51,16 +64,10 @@ bool DatabaseManager::initializeUserDatabase() {
 
 bool DatabaseManager::initializeHnnkDatabase()
 {
-    //设置数据库保存路径
-    QString baseDir = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/data");
-    if (!QDir().mkpath(baseDir)) {
-        qWarning() << "Failed to create directory:" << baseDir;
-        return false;
-    }
     //设置数据表名
-    QString dbPath = baseDir + "/hnnk_info.db";
-    m_hnnkDb.setDatabaseName(dbPath);
-    qDebug() << "Database path:" << dbPath;
+    QString dbTable = dbPath + "/hnnk_info.db";
+    m_hnnkDb.setDatabaseName(dbTable);
+    qDebug() << "Database path:" << dbTable;
     //开启数据库
     if (!m_hnnkDb.open()) {
         logError(m_hnnkDb.lastError(), "open database");
@@ -314,5 +321,33 @@ QList<HNNKData> DatabaseManager::getRecentHnnkDataByAccount(const QString &accou
         list.append(d);
     }
     return list;
+}
+
+
+void DatabaseManager::closeDatabase()
+{
+    if (m_db.isOpen()) m_db.close();
+    if (m_hnnkDb.isOpen()) m_hnnkDb.close();
+}
+
+
+
+bool DatabaseManager::openDatabase()
+{
+    return initializeHnnkDatabase() && initializeUserDatabase();
+}
+
+void DatabaseManager::setDatabasePath(const QString &path)
+{
+    if (path != dbPath) {
+        this->dbPath = path;
+        closeDatabase();
+        openDatabase();
+    }
+}
+
+QString DatabaseManager::getDatabasePath() const
+{
+    return dbPath;
 }
 

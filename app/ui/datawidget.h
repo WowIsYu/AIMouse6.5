@@ -1,5 +1,5 @@
-#ifndef ATTENTION_H
-#define ATTENTION_H
+#ifndef DATAWIDGET_H
+#define DATAWIDGET_H
 
 #include <QMainWindow>
 #include <QStandardItemModel>
@@ -15,23 +15,23 @@
 #define     COL_AVERAGE    4
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class Attention; }
+namespace Ui { class DataWidget; }
 QT_END_NAMESPACE
 
-class Attention : public QMainWindow
+class DataWidget : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    Attention(QWidget *parent = nullptr);
-    ~Attention();
+    DataWidget(QWidget *parent = nullptr);
+    ~DataWidget();
 
     void removeAllAxis(QChart *chart);
     void countData();
     void drawBarChartForWeek(const QDate &date, bool isVertical = true);
     void loadDataFromDatabase();
 private:
-    Ui::Attention *ui;
+    Ui::DataWidget *ui;
     QStandardItemModel *dataModel;
     QList<HNNKData> dataList;
 
@@ -53,4 +53,4 @@ private slots:
     void on_pushButton_clicked();
 };
 
-#endif // ATTENTION_H
+#endif // DATAWIDGET_H

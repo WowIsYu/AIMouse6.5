@@ -2,6 +2,7 @@
 #define DATADETAIL_H
 
 #include <QWidget>
+#include <qabstractitemmodel.h>
 
 namespace Ui {
 class DataDetail;
@@ -14,6 +15,8 @@ class DataDetail : public QWidget
 public:
     explicit DataDetail(QWidget *parent = nullptr);
     ~DataDetail();
+
+    void setModel(QAbstractItemModel *model);
 
 private:
     Ui::DataDetail *ui;

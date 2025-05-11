@@ -83,6 +83,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         core/databasemanager.cpp core/databasemanager.h
         core/hmulticontrolwrapper.h core/hmulticontrolwrapper.cpp
         toolui/datadetail.h toolui/datadetail.cpp toolui/datadetail.ui
+        toolui/qcustomcalendarwidget.h toolui/qcustomcalendarwidget.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

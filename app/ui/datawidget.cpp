@@ -8,6 +8,7 @@
 #include <QBarSet>
 #include <QBarSeries>
 #include <QBarCategoryAxis>
+#include "qcustomcalendarwidget.h"
 
 DataWidget::DataWidget(QWidget *parent)
     : QMainWindow(parent)
@@ -15,19 +16,32 @@ DataWidget::DataWidget(QWidget *parent)
 {
     ui->setupUi(this);
 
-    //获取数据库数据
-    loadDataFromDatabase();
+
+    tableWidget = new DataDetail();
 
     //初始化
     iniBarChart();
 
-    connect(ui->calendarWidget, &QCalendarWidget::selectionChanged, this, &DataWidget::on_calendarWidget_selectionChanged);
+    //获取数据库数据
+    loadDataFromDatabase();
 
-    // // 表格高度随内容自动扩展
 
-    // ui->tableView->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    // 表格宽度随内容自动扩展
-    ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->dateEdit->setDate(QDate::currentDate());
+    QCustomCalendarWidget* calendarWidget = new QCustomCalendarWidget(this);
+    ui->dateEdit->setCalendarPopup(true);  // 日历弹出
+    ui->dateEdit->setCalendarWidget(calendarWidget);
+    ui->dateEdit->setMinimumDate(QDate::currentDate().addDays(0));  // 0天
+    ui->dateEdit->setMaximumDate(QDate::currentDate().addDays(365));  // +365天
+    ui->dateEdit->setContextMenuPolicy(Qt::NoContextMenu);
+    ui->dateEdit->setFixedSize(150, 26);
+    ui->dateEdit->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+    calendarWidget->disconnect(SIGNAL(selectionChanged()));
+    calendarWidget->disconnect(SIGNAL(clicked(QDate)));
+
+    connect(calendarWidget, &QCustomCalendarWidget::signalSetCalendarTime, [this](const QDate& data){
+        ui->dateEdit->setDate(data);
+    });
 }
 
 
@@ -133,9 +147,7 @@ void DataWidget::loadDataFromDatabase()
         qDebug() <<"items:" <<items;
         dataModel->appendRow(items);
     }
-
-    ui->tableView->setModel(dataModel);
-
+    tableWidget->setModel(dataModel);
 
     countData(); // 统计数据
 }
@@ -252,12 +264,6 @@ void DataWidget::removeAllAxis(QChart *chart)
     }
 }
 
-void DataWidget::on_calendarWidget_selectionChanged()
-{
-    QDate selectedDate = ui->calendarWidget->selectedDate();
-    drawBarChartForWeek(selectedDate);
-}
-
 void DataWidget::on_toolBtn_GenData_clicked()
 {
     loadDataFromDatabase();
@@ -295,5 +301,19 @@ void DataWidget::do_barClicked(int index, QBarSet *barset)
 void DataWidget::on_pushButton_clicked()
 {
     emit emitUpdateHnnkData();
+}
+
+
+void DataWidget::on_dateEdit_dateChanged(const QDate &date)
+{
+    QDate selectedDate = ui->dateEdit->date();
+    drawBarChartForWeek(selectedDate);
+}
+
+
+void DataWidget::on_btn_showDetail_clicked()
+{
+
+    tableWidget->show();
 }
 

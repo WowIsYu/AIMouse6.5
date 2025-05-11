@@ -7,6 +7,7 @@
 #include <QBarSet>
 #include <QtCharts>
 #include "databasemanager.h"
+#include "datadetail.h"
 // 列编号
 #define     COL_ID       0
 #define     COL_ACCOUNT      1
@@ -34,6 +35,7 @@ private:
     Ui::DataWidget *ui;
     QStandardItemModel *dataModel;
     QList<HNNKData> dataList;
+    DataDetail *tableWidget;
 
     void generateRandomData();
     void iniBarChart();
@@ -45,12 +47,13 @@ public slots:
 
 private slots:
     void on_toolBtn_GenData_clicked();
-    void on_calendarWidget_selectionChanged();
     void do_barHovered(bool status, int index, QBarSet *barset);
     void do_barClicked(int index, QBarSet *barset);
     void do_pieHovered(QPieSlice *slice, bool state);
     void on_btnBuildBarChart_clicked();
     void on_pushButton_clicked();
+    void on_dateEdit_dateChanged(const QDate &date);
+    void on_btn_showDetail_clicked();
 };
 
 #endif // DATAWIDGET_H

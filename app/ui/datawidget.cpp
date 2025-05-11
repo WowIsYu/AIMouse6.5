@@ -42,6 +42,8 @@ DataWidget::DataWidget(QWidget *parent)
     connect(calendarWidget, &QCustomCalendarWidget::signalSetCalendarTime, [this](const QDate& data){
         ui->dateEdit->setDate(data);
     });
+
+    emit emitUpdateHnnkData();
 }
 
 
@@ -55,45 +57,32 @@ void DataWidget::countData()
     QTreeWidgetItem *item;  //节点
     for(int i=COL_AVERAGE -1;i<=COL_AVERAGE -1;i++)
     {
-        int cnt50=0;
         int cnt60=0;
-        int cnt70=0;
+        int cnt60to80=0;
         int cnt80=0;
-        int cnt90=0;
         for(int j=0;j<dataModel->rowCount();j++)
         {
             int val=dataModel->item(j,i)->text().toDouble();
             qDebug() << val;
             if (val<60)
-                cnt50++;
-            else if ((val>=60) && (val<70))
                 cnt60++;
-            else if ((val>=70) && (val<80))
-                cnt70++;
-            else if ((val>=80) && (val<90))
-                cnt80++;
+            else if (val < 80)
+                cnt60to80++;
             else
-                cnt90++;
+                cnt80++;
         }
         item=ui->treeWidget->topLevelItem(0); //<60
-        item->setText(1,QString::number(cnt50));
-        item->setTextAlignment(i,Qt::AlignHCenter);
-
-        item=ui->treeWidget->topLevelItem(1); //60
         item->setText(1,QString::number(cnt60));
         item->setTextAlignment(i,Qt::AlignHCenter);
 
-        item=ui->treeWidget->topLevelItem(2); //70
-        item->setText(1,QString::number(cnt70));
+        item=ui->treeWidget->topLevelItem(1); //60-80
+        item->setText(1,QString::number(cnt60to80));
         item->setTextAlignment(i,Qt::AlignHCenter);
 
-        item=ui->treeWidget->topLevelItem(3); //80
+        item=ui->treeWidget->topLevelItem(2); //>80
         item->setText(1,QString::number(cnt80));
         item->setTextAlignment(i,Qt::AlignHCenter);
 
-        item=ui->treeWidget->topLevelItem(4); //90
-        item->setText(1,QString::number(cnt90));
-        item->setTextAlignment(i,Qt::AlignHCenter);
     }
 }
 
@@ -115,6 +104,16 @@ void DataWidget::onHnnkData(QList<HNNKData> data)
     loadDataFromDatabase();
     //用来加载图数据
     drawBarChartForWeek(QDate::currentDate(),true);
+}
+
+void DataWidget::onDetectStart(bool flag)
+{
+    this->flagDetect = !flag;
+
+    if (!flag) {
+        // 说明开启检测成功
+        ui->btn_detect->setText("停止检测");
+    }
 }
 
 /**
@@ -298,12 +297,6 @@ void DataWidget::do_barClicked(int index, QBarSet *barset)
     // ui->statusbar->showMessage(str);
 }
 
-void DataWidget::on_pushButton_clicked()
-{
-    emit emitUpdateHnnkData();
-}
-
-
 void DataWidget::on_dateEdit_dateChanged(const QDate &date)
 {
     QDate selectedDate = ui->dateEdit->date();
@@ -313,7 +306,40 @@ void DataWidget::on_dateEdit_dateChanged(const QDate &date)
 
 void DataWidget::on_btn_showDetail_clicked()
 {
-
     tableWidget->show();
+}
+
+void DataWidget::on_btn_update_clicked()
+{
+    emit emitUpdateHnnkData();
+}
+
+void DataWidget::on_btn_detect_clicked()
+{
+    if (flagDetect) {
+        //checked为true时，标识为开始检测, 所以下次点击为停止检测
+        int choice = 0;
+        // 调用SDK启动算法检测
+        if (ui->btn_user->isChecked()) // 使用用户模型算法
+            choice = 1;
+        else if (ui->btn_bigmodel->isChecked()) // 使用大数据模型算法
+            choice = 2;
+
+        emit emitStartBlinkDetection(choice);
+        emit emitShowAttention();
+
+    } else {
+        //checked为false时，表示点击时停止检测
+
+        emit emitStopBlinkDetection();
+        flagDetect = true;
+        ui->btn_detect->setText("开始检测");
+    }
+}
+
+
+void DataWidget::on_btn_showDetect_clicked()
+{
+    emit emitShowAttention();
 }
 

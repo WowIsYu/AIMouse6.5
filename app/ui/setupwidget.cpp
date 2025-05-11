@@ -31,7 +31,7 @@ SetUpWidget::SetUpWidget(QWidget *parent)
     //         layout->addWidget(m_webView);
     //         // m_webView->load(QUrl("https://www.baidu.com"));
 
-    //         QString filePath = "./person_infromation.html"; // 替换为你的相对路径
+    //         QString filePath = "./person_infromation.html";
     //         m_webView->load(QUrl::fromLocalFile(QDir::current().absoluteFilePath(filePath)));
     //         m_webView->setZoomFactor(0.5); //缩放比例0.5
     //     }
@@ -51,35 +51,6 @@ void SetUpWidget::on_horizontalSlider_valueChanged(int value)
     emit emitSetSensitivity(value);
 }
 
-void SetUpWidget::onAttenDetectionResult(double val)
-{
-    double val2=val*100;
-    ui->resultLabel->setText(QString::number(val2,'f', 0));
-}
-
-
-void SetUpWidget::on_beginButton_clicked()
-{
-    int choice = 0;
-    // 调用SDK启动算法检测
-    if (ui->userModeBtn->isChecked()) // 使用用户模型算法
-        choice = 1;
-    else if (ui->bigDataBtn->isChecked()) // 使用大数据模型算法
-        choice = 2;
-
-    emit emitStartBlinkDetection(choice);
-
-}
-
-void SetUpWidget::on_stopButton_clicked()
-{
-    emit emitStopBlinkDetection();
-}
-
-void SetUpWidget::on_pushButton_clicked()
-{
-    emit emitShowAttention();
-}
 void SetUpWidget::on_btnSet_clicked()
 {
     ui->stackedWidget->setCurrentIndex(0);

@@ -138,6 +138,9 @@ void MainWindow::initConnections() {
 
     connect(this, &MainWindow::emitHnnkData, dataWidget, &DataWidget::onHnnkData);
     connect(dataWidget, &DataWidget::emitUpdateHnnkData, this, &MainWindow::onHnnkData);
+    connect(dataWidget, &DataWidget::emitStartBlinkDetection, this, &MainWindow::onStartBlinkDetection);
+    connect(dataWidget, &DataWidget::emitStopBlinkDetection, this, &MainWindow::onStopBlinkDetection);
+    connect(dataWidget, &DataWidget::emitShowAttention, this, &MainWindow::onShowAttention);
 
     connect(m_pchooseWindow, &ChooseDevice::refreshList, m_multiControl, &HMultiControlWrapper::onSearchDeviceList);
     connect(m_multiControl, &HMultiControlWrapper::notifyDeviceNameUpdate, m_pchooseWindow, &ChooseDevice::onUpdateDeviceNameList);
@@ -154,17 +157,16 @@ void MainWindow::initConnections() {
     });
     connect(m_multiControl, &HMultiControlWrapper::notifyAttenDetectionResult
             , [this](double val) {
-                if (m_isDetecting) {
-                    attentionValues.append(val);
-                }
-                attentionShow->onReceiveResult(val);
-     });
+        if (m_isDetecting) {
+            attentionValues.append(val);
+        }
+        attentionShow->onReceiveResult(val);
+        emit emitDetectStart(true);
 
-    connect(m_multiControl, &HMultiControlWrapper::notifyAttenDetectionResult, setUpWidget, &SetUpWidget::onAttenDetectionResult);
+     });
+    connect(this, &MainWindow::emitDetectStart, dataWidget, &DataWidget::onDetectStart);
+
     connect(setUpWidget, &SetUpWidget::emitSetSensitivity, m_multiControl, &HMultiControlWrapper::setSensitivity);
-    connect(setUpWidget, &SetUpWidget::emitStopBlinkDetection, this, &MainWindow::onStopBlinkDetection);
-    connect(setUpWidget, &SetUpWidget::emitStartBlinkDetection, this, &MainWindow::onStartBlinkDetection);
-    connect(setUpWidget, &SetUpWidget::emitShowAttention, this, &MainWindow::onShowAttention);
 
     connect(m_multiControl,&HMultiControlWrapper::notifyCaliTrigger, blinkCaliWidget, &BlinkCaliWidget::onCaliTrigger);
     connect(m_multiControl, &HMultiControlWrapper::notifyCalibrationResult, blinkCaliWidget, &BlinkCaliWidget::onCalibrationResult);

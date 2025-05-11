@@ -36,14 +36,20 @@ private:
     QStandardItemModel *dataModel;
     QList<HNNKData> dataList;
     DataDetail *tableWidget;
+    bool flagDetect = true;
 
     void generateRandomData();
     void iniBarChart();
     void drawBarChart();
 signals:
     void emitUpdateHnnkData();
+    void emitStartBlinkDetection(int choice);
+    void emitStopBlinkDetection();
+    void emitShowAttention();
+
 public slots:
     void onHnnkData(QList<HNNKData>);
+    void onDetectStart(bool flag);
 
 private slots:
     void on_toolBtn_GenData_clicked();
@@ -51,9 +57,11 @@ private slots:
     void do_barClicked(int index, QBarSet *barset);
     void do_pieHovered(QPieSlice *slice, bool state);
     void on_btnBuildBarChart_clicked();
-    void on_pushButton_clicked();
     void on_dateEdit_dateChanged(const QDate &date);
     void on_btn_showDetail_clicked();
+    void on_btn_update_clicked();
+    void on_btn_detect_clicked();
+    void on_btn_showDetect_clicked();
 };
 
 #endif // DATAWIDGET_H

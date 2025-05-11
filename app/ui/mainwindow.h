@@ -140,6 +140,7 @@ signals:
     void emitGraphCode(QPixmap pixMap, QString m_imgId);
     void emitEegData(QVector<hnnk::EegDataChan> eogVec);
     void emitParameter(hnnk::BasicParameter para);
+    void emitDetectStart(bool flag);
 };
 
 #endif // MAINWINDOW_H

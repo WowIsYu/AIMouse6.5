@@ -182,12 +182,12 @@ void LoginWidget::on_pushButton_clicked()
         return;
     }
 
-    emit onInsertUser(account, password, ui->checkBox_token->isChecked());
-    // if(ui->radioButton_login->isChecked()){
-    //     emit emitLogin(account, password, captcha, captchaId);
-    // }else{
-    //     emit emitRegister(account, password, captcha, captchaId);
-    // }
+    // emit onInsertUser(account, password, ui->checkBox_token->isChecked());
+    if(ui->radioButton_login->isChecked()){
+        emit emitLogin(account, password, captcha, captchaId);
+    }else{
+        emit emitRegister(account, password, captcha, captchaId);
+    }
 }
 
 

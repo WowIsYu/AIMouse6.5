@@ -188,8 +188,8 @@ void Map::generateMaze()
 {
     QStack<MapBlock> blockStack;
 
-    int currentX = QRandomGenerator::global()->bounded(units.size());
-    int currentY = QRandomGenerator::global()->bounded(units[0].size()); // 假设所有行等宽
+    int currentX = QRandomGenerator::global()->bounded(static_cast<int>(units.size()));
+    int currentY = QRandomGenerator::global()->bounded(static_cast<int>(units[0].size())); // 假设所有行等宽
 
     setVisited(currentX, currentY);
     blockStack.push(MapBlock(currentX, currentY));

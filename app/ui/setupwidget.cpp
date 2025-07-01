@@ -15,28 +15,6 @@ SetUpWidget::SetUpWidget(QWidget *parent)
     Q_INIT_RESOURCE(nagano_res); // 注意：名称必须与 .qrc 文件名一致（不带扩展名）
 
 
-    //发送注意力值给attentionShow
-
-    // 获取第二页（索引为 1）的部件
-    // QWidget *secondPage = ui->stackedWidget->widget(1);
-
-    // if (secondPage) {
-    //     //frame_information 是 QFrame 的指针，且在第二页中
-    //     QFrame *frameInformation = secondPage->findChild<QFrame *>("frame_information");
-    //     if (frameInformation) {
-    //         // frameInformation->setStyleSheet("background-color: red;");
-    //         m_webView = new QWebEngineView(this);
-    //         QStackedLayout* layout = new QStackedLayout(ui->frame);
-    //         frameInformation->setLayout(layout);
-    //         layout->addWidget(m_webView);
-    //         // m_webView->load(QUrl("https://www.baidu.com"));
-
-    //         QString filePath = "./person_infromation.html";
-    //         m_webView->load(QUrl::fromLocalFile(QDir::current().absoluteFilePath(filePath)));
-    //         m_webView->setZoomFactor(0.5); //缩放比例0.5
-    //     }
-    // }
-
 }
 
 SetUpWidget::~SetUpWidget()

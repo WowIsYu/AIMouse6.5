@@ -186,7 +186,7 @@ void Nagano::loadRoleActRes()
         for (int i = 1; i <= count; ++i) {
             memset(buf, 0, sizeof(buf));
             // 格式化（数据，char*, ）
-            sprintf_s(buf, path.toStdString(). c_str(), i);
+            sprintf(buf, path.toStdString(). c_str(), i);
             paths.append(QString::fromUtf8(buf));
         }
         action_map.insert(k, paths);

@@ -165,7 +165,7 @@ QPushButton:default {
              <string/>
             </property>
             <property name="pixmap">
-             <pixmap resource="../res.qrc">:/img/sharp_logo.png</pixmap>
+             <pixmap resource="res.qrc">:/img/sharp_logo.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -231,7 +231,7 @@ QPushButton:default {
           <string>波形显示</string>
          </property>
          <property name="icon">
-          <iconset resource="../res.qrc">
+          <iconset resource="res.qrc">
            <normaloff>:/img/wave.png</normaloff>:/img/wave.png</iconset>
          </property>
          <property name="checkable">
@@ -266,7 +266,7 @@ QPushButton:default {
           <string>眨眼校准</string>
          </property>
          <property name="icon">
-          <iconset resource="../res.qrc">
+          <iconset resource="res.qrc">
            <normaloff>:/img/eye.png</normaloff>:/img/eye.png</iconset>
          </property>
          <property name="checkable">
@@ -301,7 +301,7 @@ QPushButton:default {
           <string>游戏测试</string>
          </property>
          <property name="icon">
-          <iconset resource="../res.qrc">
+          <iconset resource="res.qrc">
            <normaloff>:/img/game.png</normaloff>:/img/game.png</iconset>
          </property>
          <property name="checkable">
@@ -336,7 +336,7 @@ QPushButton:default {
           <string>注意力检测</string>
          </property>
          <property name="icon">
-          <iconset resource="../res.qrc">
+          <iconset resource="res.qrc">
            <normaloff>:/img/set.png</normaloff>:/img/set.png</iconset>
          </property>
          <property name="checkable">
@@ -377,7 +377,7 @@ QPushButton:default {
           <string>AI</string>
          </property>
          <property name="icon">
-          <iconset resource="../res.qrc">
+          <iconset resource="res.qrc">
            <normaloff>:/img/set.png</normaloff>:/img/set.png</iconset>
          </property>
          <property name="checkable">
@@ -497,7 +497,7 @@ QPushButton:default {
              <string>设置</string>
             </property>
             <property name="icon">
-             <iconset resource="../res.qrc">
+             <iconset resource="res.qrc">
               <normaloff>:/img/set.png</normaloff>:/img/set.png</iconset>
             </property>
             <property name="checkable">
@@ -626,7 +626,7 @@ QPushButton:default {
              <string/>
             </property>
             <property name="pixmap">
-             <pixmap resource="../res.qrc">:/img/xiaoba.jpg</pixmap>
+             <pixmap resource="res.qrc">:/img/xiaoba.jpg</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -817,7 +817,7 @@ QPushButton:default {
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../res.qrc"/>
+  <include location="res.qrc"/>
  </resources>
  <connections>
   <connection>

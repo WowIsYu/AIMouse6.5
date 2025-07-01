@@ -118,7 +118,7 @@ void WaveFormWidget::setUi() {
     ui->customPlot->axisRect()->setBackground(QBrush(Qt::white));
     ui->customPlot->xAxis->setRange(0, 8, Qt::AlignLeft);
     ui->customPlot->xAxis->grid()->setPen(QPen(QColor(180, 180, 180), 1, Qt::PenStyle::DashLine));
-    ui->customPlot->yAxis->setRange(-10, 600);
+    ui->customPlot->yAxis->setRange(-10, 1000);
     ui->customPlot->yAxis->setLabel("uV");
     ui->customPlot->yAxis->setLabelColor(Qt::blue);
     ui->customPlot->yAxis->setLabelFont(QFont(("Arial"),12));

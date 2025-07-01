@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QThread>
 #include <qhotkey.h>
+#include <QPushButton>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,8 +21,6 @@ MainWindow::MainWindow(QWidget *parent)
     initMuitl();
 
     initLogin();
-
-
 }
 
 MainWindow::~MainWindow()
@@ -100,7 +99,7 @@ void MainWindow::onLoginSuccess()
 
     initUI();
 
-    //开启线程来开AI
+    //开启AI
     process = new QProcess(this);
 
     //开启热键
@@ -208,7 +207,7 @@ void MainWindow::onReciveEegData(QVector<EegDataChan> eogVec)
     for (auto &it : eogVec) {
         eogData.insert(eogData.end(), it.data.begin(), it.data.end());
     }
-    qDebug() << " emitData" << eogData.at(0) << eogData.at(1);
+    // qDebug() << " emitData" << eogData.at(0) << eogData.at(1);
 
     //发送给波形图界面
     BasicParameter parameter = m_multiControl->getParameter();

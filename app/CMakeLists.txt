@@ -18,8 +18,8 @@ set(CMAKE_PREFIX_PATH "D:/develop_software/Qt-6.5.3/6.5.3/msvc2019_64")
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets
             Network Concurrent Xml SerialPort Bluetooth PrintSupport Core5Compat REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Sql Charts WebEngineWidgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets WebEngineWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Sql Charts)
 # target_link_libraries(mytarget PRIVATE Qt6::Sql)
 # 第三方库路径
 set(THIRD_PARTY_DIR "${CMAKE_SOURCE_DIR}/third_party")
@@ -34,7 +34,7 @@ set(PROJECT_SOURCES
   ui/blinkcaliwidget.cpp
   ui/gamewidget.cpp
   ui/loginwidget.cpp
-  ui/mainwindow.cpp
+  mainwindow.cpp
   ui/setupwidget.cpp
   ui/waveformwidget.cpp
   toolui/choosedevice.cpp
@@ -52,7 +52,7 @@ set(PROJECT_SOURCES
   ui/blinkcaliwidget.h
   ui/gamewidget.h
   ui/loginwidget.h
-  ui/mainwindow.h
+  mainwindow.h
   ui/setupwidget.h
   ui/waveformwidget.h
   toolui/choosedevice.h
@@ -65,7 +65,7 @@ set(PROJECT_SOURCES
   ui/blinkcaliwidget.ui
   ui/gamewidget.ui
   ui/loginwidget.ui
-  ui/mainwindow.ui
+  mainwindow.ui
   ui/setupwidget.ui
   ui/waveformwidget.ui
   toolui/choosedevice.ui
@@ -79,11 +79,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(app
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        res.qrc
         core/databasemanager.cpp core/databasemanager.h
         core/hmulticontrolwrapper.h core/hmulticontrolwrapper.cpp
         toolui/datadetail.h toolui/datadetail.cpp toolui/datadetail.ui
         toolui/qcustomcalendarwidget.h toolui/qcustomcalendarwidget.cpp
+        res.qrc
+        ui/userinfo.h ui/userinfo.cpp ui/userinfo.ui
+
 
     )
 # Define target properties for Android with Qt 6 as:

@@ -5,7 +5,6 @@
 #include <QDebug>
 #include <QTimer>
 #include <QDateTime>
-#include <QWebEngineView>
 namespace Ui {
 class SetUpWidget;
 }
@@ -31,7 +30,7 @@ public:
 
 private:
     Ui::SetUpWidget *ui;                               // UI指针
-    QWebEngineView *m_webView;                   // 网页视图
+    // QWebEngineView *m_webView;                   // 网页视图
 
 };
 

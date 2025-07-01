@@ -9,6 +9,7 @@
         <file>img/ic_usb_bluetooth.png</file>
         <file>img/map.png</file>
         <file>img/mario.png</file>
+        <file>img/maze.png</file>
         <file>img/min.png</file>
         <file>img/mouse_pointer.png</file>
         <file>img/mouse_pointer_green.png</file>
@@ -31,6 +32,5 @@
         <file>img/user_name.png</file>
         <file>img/wave.png</file>
         <file>img/xiaoba.jpg</file>
-        <file>img/maze.png</file>
     </qresource>
 </RCC>
